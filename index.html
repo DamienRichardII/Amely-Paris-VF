@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amely Paris — Design & Gastronomie</title>
+  <meta name="description" content="Brunchs, buffets gourmands, animations culinaires & corporate. Paris & Île-de-France.">
+  <link rel="icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- ══ INTRO ANIMATION ══════════════════════════════════════ -->
+<div id="amely-intro">
+  <canvas id="intro-canvas"></canvas>
+  <div class="intro-halo"></div>
+  <div class="intro-center">
+    <span class="intro-eyebrow">Design &amp; Gastronomie</span>
+    <span class="intro-rule intro-rule--top"></span>
+    <span class="intro-name">Amely Paris</span>
+    <span class="intro-tagline">Paris &amp; Île-de-France</span>
+    <span class="intro-rule intro-rule--bottom"></span>
+  </div>
+</div>
+
+<script>
+/* ── Canvas petal animation ── */
+(function() {
+  var canvas = document.getElementById('intro-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, petals = [], rAF;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* Couleurs mariage : ivoire, or, rose poudré, vert sauge */
+  var COLORS = [
+    'rgba(240,235,224,',   /* ivoire */
+    'rgba(210,178,120,',   /* or */
+    'rgba(226,210,196,',   /* nude rosé */
+    'rgba(180,195,168,',   /* vert sauge */
+    'rgba(235,220,205,',   /* champagne */
+  ];
+
+  function Petal() { this.reset(true); }
+  Petal.prototype.reset = function(init) {
+    this.x  = Math.random() * W;
+    this.y  = init ? Math.random() * H - H : -20;
+    this.r1 = 3 + Math.random() * 7;   /* demi-axe long */
+    this.r2 = this.r1 * (.35 + Math.random()*.25); /* demi-axe court */
+    this.rot = Math.random() * Math.PI * 2;
+    this.rotSpeed = (Math.random() - .5) * .018;
+    this.vx = (Math.random() - .5) * .6;
+    this.vy = .25 + Math.random() * .55;
+    this.swing = Math.random() * Math.PI * 2;
+    this.swingSpeed = .008 + Math.random() * .012;
+    this.swingAmp = 18 + Math.random() * 32;
+    this.alpha = .12 + Math.random() * .38;
+    this.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+    this.type  = Math.floor(Math.random() * 3); /* 0=pétale 1=feuille 2=cercle */
+  };
+  Petal.prototype.update = function() {
+    this.swing += this.swingSpeed;
+    this.x += Math.sin(this.swing) * .8 + this.vx;
+    this.y += this.vy;
+    this.rot += this.rotSpeed;
+    if (this.y > H + 30) this.reset(false);
+  };
+  Petal.prototype.draw = function(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.rot);
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color + '1)';
+
+    if (this.type === 0) {
+      /* Pétale de fleur — forme ovale */
+      ctx.beginPath();
+      ctx.ellipse(0, 0, this.r1, this.r2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      /* Nervure centrale */
+      ctx.strokeStyle = this.color + '.3)';
+      ctx.lineWidth = .5;
+      ctx.beginPath();
+      ctx.moveTo(-this.r1 * .7, 0);
+      ctx.lineTo(this.r1 * .7, 0);
+      ctx.stroke();
+    } else if (this.type === 1) {
+      /* Feuille pointue */
+      ctx.beginPath();
+      ctx.moveTo(0, -this.r1);
+      ctx.quadraticCurveTo(this.r2, 0, 0, this.r1);
+      ctx.quadraticCurveTo(-this.r2, 0, 0, -this.r1);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      /* Petit disque délicat */
+      ctx.beginPath();
+      ctx.arc(0, 0, this.r2 * .8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  };
+
+  /* Init 120 pétales */
+  for (var i = 0; i < 120; i++) petals.push(new Petal());
+
+  var alive = true;
+  function tick() {
+    if (!alive) return;
+    ctx.clearRect(0, 0, W, H);
+    for (var i = 0; i < petals.length; i++) {
+      petals[i].update();
+      petals[i].draw(ctx);
+    }
+    rAF = requestAnimationFrame(tick);
+  }
+  tick();
+
+  /* Arrêt propre à la fin de l'animation */
+  setTimeout(function() {
+    alive = false;
+    cancelAnimationFrame(rAF);
+  }, 5200);
+})();
+</script>
+
+<!-- ══ HEADER ═══════════════════════════════════════════════ -->
+<header class="site-header">
+  <div class="container header-row">
+    <a class="header-brand-text" href="index.html">Amely Paris</a>
+    <nav class="primary-nav" aria-label="Navigation principale">
+      <a href="index.html" class="is-active">Accueil</a>
+      <div class="nav-item has-dropdown">
+        <a href="brunch-buffets.html">Prestations</a>
+        <div class="dropdown">
+          <a href="brunch-buffets.html">Brunch &amp; Buffets</a>
+          <a href="traiteur-formats.html">Traiteur &amp; Formats</a>
+          <a href="animations-culinaires.html">Animations culinaires</a>
+          <a href="corporate.html">Corporate</a>
+        </div>
+      </div>
+      <a href="realisations.html">Réalisations</a>
+      <a href="journal.html">Journal</a>
+      <div class="nav-item has-dropdown">
+        <a href="notre-maison.html">À propos</a>
+        <div class="dropdown">
+          <a href="notre-maison.html">Notre maison</a>
+          <a href="scenographie-design.html">Scénographie</a>
+          <a href="references-partenariats.html">Références</a>
+          <a href="faq.html">FAQ</a>
+          <a href="degustation-showroom.html">Showroom · Loft 96</a>
+        </div>
+      </div>
+    </nav>
+    <div class="header-cta">
+      <a href="contact.html">Devis</a>
+    </div>
+    <button class="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- ══ HERO ══════════════════════════════════════════════════ -->
+<main>
+<section class="hero">
+  <div class="hero-media">
+    <video id="hero-video" autoplay muted playsinline loop preload="auto" style="width:100%;height:100%;object-fit:cover;">
+      <source src="assets/video/hero.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+  </div>
+  <div class="container hero-inner">
+    <span class="kicker kicker--light">Paris & Île-de-France</span>
+    <h1 class="hero-title">Design &amp; Gastronomie.</h1>
+  </div>
+  <div class="container hero-caption">
+    Devis sous 24–48h
+  </div>
+</section>
+
+<!-- ══ 2×2 PHOTO GRID ══════════════════════════════════════ -->
+<div class="section--flush" style="background:var(--white);padding:60px 0 0;">
+  <div class="photo-grid-2x2">
+    <div class="pg-cell fade-in">
+      <img loading="lazy" src="assets/gallery/brochure_14.jpg" alt="Buffet">
+    </div>
+    <div class="pg-cell fade-in">
+      <img loading="lazy" src="assets/gallery/quiche.jpeg" alt="Quiche">
+    </div>
+    <div class="pg-cell fade-in">
+      <img loading="lazy" src="assets/gallery/viennoiserie.jpeg" alt="Viennoiserie">
+    </div>
+    <div class="pg-cell fade-in">
+      <img loading="lazy" src="assets/gallery/realisations_01.jpg" alt="Réalisation">
+    </div>
+  </div>
+</div>
+
+<!-- ══ SAVOIR-FAIRE — 2x2 grid ══════════════════════════════ -->
+<section class="section section--paper" style="padding-top:80px; padding-bottom:24px;">
+  <div class="container">
+    <div class="section-head fade-in">
+      <div>
+        <span class="kicker">Savoir-faire</span>
+        <h2>Chaque détail<br>raconte une histoire.</h2>
+      </div>
+      <a class="btn" href="realisations.html">Voir les réalisations</a>
+    </div>
+  </div>
+</section>
+
+<!-- Scroll infini lookbook -->
+<div class="section--flush" style="background:var(--paper); padding-bottom:80px;">
+  <div class="lookbook-wrap">
+    <div class="lookbook-track">
+      <!-- 8 items dupliqués pour le scroll infini -->
+      <a href="realisations.html" class="look">
+        <img loading="lazy" src="assets/gallery/realisations_01.jpg" alt="Buffet signature">
+        <span class="look-label">Buffet signature</span>
+      </a>
+      <a href="scenographie-design.html" class="look">
+        <img loading="lazy" src="assets/gallery/realisations_02.jpg" alt="Scénographie">
+        <span class="look-label">Scénographie</span>
+      </a>
+      <a href="traiteur-formats.html" class="look">
+        <img loading="lazy" src="assets/gallery/realisations_03.jpg" alt="Finger food">
+        <span class="look-label">Finger food</span>
+      </a>
+      <a href="brunch-buffets.html" class="look">
+        <img loading="lazy" src="assets/gallery/quiche.jpeg" alt="Brunch gourmand">
+        <span class="look-label">Brunch gourmand</span>
+      </a>
+      <a href="brunch-buffets.html" class="look">
+        <img loading="lazy" src="assets/gallery/viennoiserie.jpeg" alt="Douceurs">
+        <span class="look-label">Douceurs</span>
+      </a>
+      <a href="corporate.html" class="look">
+        <img loading="lazy" src="assets/gallery/realisations-hero.jpeg" alt="Corporate">
+        <span class="look-label">Corporate</span>
+      </a>
+      <!-- Doublons pour boucle infinie -->
+      <a href="realisations.html" class="look">
+        <img loading="lazy" src="assets/gallery/realisations_01.jpg" alt="Buffet signature">
+        <span class="look-label">Buffet signature</span>
+      </a>
+      <a href="scenographie-design.html" class="look">
+        <img loading="lazy" src="assets/gallery/realisations_02.jpg" alt="Scénographie">
+        <span class="look-label">Scénographie</span>
+      </a>
+      <a href="traiteur-formats.html" class="look">
+        <img loading="lazy" src="assets/gallery/realisations_03.jpg" alt="Finger food">
+        <span class="look-label">Finger food</span>
+      </a>
+      <a href="brunch-buffets.html" class="look">
+        <img loading="lazy" src="assets/gallery/quiche.jpeg" alt="Brunch gourmand">
+        <span class="look-label">Brunch gourmand</span>
+      </a>
+      <a href="brunch-buffets.html" class="look">
+        <img loading="lazy" src="assets/gallery/viennoiserie.jpeg" alt="Douceurs">
+        <span class="look-label">Douceurs</span>
+      </a>
+      <a href="corporate.html" class="look">
+        <img loading="lazy" src="assets/gallery/realisations-hero.jpeg" alt="Corporate">
+        <span class="look-label">Corporate</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SIGNATURE STRIP — réduite ════════════════════════════ -->
+<div class="signature-strip">
+  <p>Manger avec les yeux, savourer avec le cœur.</p>
+</div>
+
+<!-- ══ FORMATS — Ralph Lauren style ════════════════════════ -->
+<section class="section" style="padding-top:0; padding-bottom:0;">
+  <div class="formats-grid" style="padding:0;">
+    <div class="format-card fade-in">
+      <img loading="lazy" src="assets/gallery/brochure_03.jpg" alt="Coffee break">
+      <div class="format-card-top-label">
+        <span class="kicker">Formats</span>
+        <p class="format-card-headline">Sur-mesure.</p>
+      </div>
+      <div class="format-card-overlay">
+        <span class="kicker">Petit-déjeuner</span>
+        <h3>Coffee break</h3>
+        <a href="traiteur-formats.html#coffee" class="btn btn--ghost">Découvrir</a>
+      </div>
+    </div>
+    <div class="format-card fade-in">
+      <img loading="lazy" src="assets/gallery/viennoiserie.jpeg" alt="Brunch signature">
+      <div class="format-card-overlay">
+        <span class="kicker">Signature</span>
+        <h3>Brunch &amp; Buffets</h3>
+        <a href="brunch-buffets.html" class="btn btn--ghost">Découvrir</a>
+      </div>
+    </div>
+    <div class="format-card fade-in">
+      <img loading="lazy" src="assets/gallery/brochure_19.jpg" alt="Finger food">
+      <div class="format-card-top-link">
+        <a href="traiteur-formats.html">Tous les formats</a>
+      </div>
+      <div class="format-card-overlay">
+        <span class="kicker">Cocktail</span>
+        <h3>Finger food</h3>
+        <a href="traiteur-formats.html#finger-food" class="btn btn--ghost">Découvrir</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ À LA UNE — Panorama magazine ════════════════════════ -->
+<div class="section--flush" style="background:var(--cream);">
+  <!-- Logo transparent centré -->
+  <div class="alaune-logo">
+    <img src="assets/img/logo-transparent.png" alt="Amely Paris">
+  </div>
+  <!-- Titre grand -->
+  <div class="alaune-title container">
+    <h2>À la une.</h2>
+  </div>
+  <!-- Panorama PJ2 style — photo gauche + texte droite -->
+  <div class="journal-panorama fade-in">
+    <div class="journal-panorama__img">
+      <img loading="lazy" src="assets/gallery/journal-hero.jpeg" alt="Commission européenne">
+    </div>
+    <div class="journal-panorama__body">
+      <span class="kicker">À la une · Janvier 2026</span>
+      <h2>Commission<br>européenne.</h2>
+      <p>Service, dressage, détails &amp; ambiance. Une prestation corporate d'exception orchestrée par Amely Paris.</p>
+      <a class="btn btn--onphoto" href="journal/commission-europeenne.html">Lire l'article</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SHOWROOM — Panorama ═════════════════════════════════ -->
+<div class="section--flush">
+  <div class="loft-panorama fade-in">
+    <div class="loft-panorama__body">
+      <span class="kicker">Showroom</span>
+      <h2>Loft 96</h2>
+      <p>Espace événementiel de 1000 m² à Épinay-sur-Orge. Dégustations, scénographies, projections. Sur rendez-vous.</p>
+      <a class="btn btn--onphoto" href="degustation-showroom.html">Planifier une dégustation</a>
+    </div>
+    <div class="loft-panorama__img">
+      <img loading="lazy" src="assets/gallery/image00040.jpeg" alt="Loft 96 Showroom">
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONTACT CTA<!-- ══ CONTACT CTA ═══════════════════════════════════════════ -->
+<section style="padding:96px 0;text-align:center;background:var(--cream);">
+  <div class="container fade-in">
+    <span class="kicker">Votre événement</span>
+    <h2 style="font-style:italic;margin:16px 0 12px;">Parlons-en.</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:36px;letter-spacing:.04em;">Proposition sous 24–48h · Prestations sur-mesure</p>
+    <a class="btn btn--primary" href="contact.html">Demander un devis</a>
+  </div>
+</section>
+</main>
+
+<!-- ══ FOOTER ════════════════════════════════════════════════ -->
+<!-- ══ PRE-FOOTER STRIP ═══════════════════════════════════════ -->
+<div class="pre-footer-strip">
+  <span>Amel &amp; Lorys</span>
+  <a href="tel:+33622684059">06 22 68 40 59</a>
+  <span>·</span>
+  <a href="mailto:contact.amelyparis@gmail.com">contact.amelyparis@gmail.com</a>
+  <span>·</span>
+  <a href="assets/docs/brochure.pdf" download>Brochure PDF</a>
+</div>
+<footer class="footer">
+  <div class="container footer__grid">
+    <div class="footer__brand">
+      <img class="footer__logo" src="assets/img/logo.png" alt="Amely Paris">
+      <span class="footer__brand-name">Amely Paris</span>
+      <p>Design &amp; Gastronomie —<br>brunchs, buffets, animations culinaires<br>&amp; formats corporate.</p>
+      <div class="footer__social">
+        <a href="https://www.instagram.com/ameleventparis/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a>
+        <a href="https://fr.pinterest.com/ameleventparis/" target="_blank" rel="noopener" aria-label="Pinterest"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.632-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/></svg></a>
+        <a href="assets/docs/brochure.pdf" download class="brochure-link" aria-label="Brochure"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-3 8l-3-3 1.4-1.4L10 14.2l4.6-4.6L16 11l-6 6z"/></svg></a>
+      </div>
+    </div>
+    <div class="footer__col">
+      <span class="footer__title">Prestations</span>
+      <ul>
+        <li><a href="brunch-buffets.html">Brunch &amp; Buffets</a></li>
+        <li><a href="traiteur-formats.html">Traiteur &amp; Formats</a></li>
+        <li><a href="animations-culinaires.html">Animations culinaires</a></li>
+        <li><a href="corporate.html">Corporate</a></li>
+      </ul>
+    </div>
+    <div class="footer__col">
+      <span class="footer__title">À propos</span>
+      <ul>
+        <li><a href="notre-maison.html">Notre maison</a></li>
+        <li><a href="scenographie-design.html">Scénographie</a></li>
+        <li><a href="references-partenariats.html">Références</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="degustation-showroom.html">Loft 96</a></li>
+      </ul>
+    </div>
+    <div class="footer__col">
+      <span class="footer__title">Contact</span>
+      <ul>
+        <li><a href="mailto:contact.amelyparis@gmail.com">contact.amelyparis@gmail.com</a></li>
+        <li><a href="tel:+33622684059">06 22 68 40 59</a></li>
+        <li><a href="tel:+33782159331">07 82 15 93 31</a></li>
+        <li><a href="contact.html">Demander un devis</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="container footer__legal">
+    <span>© 2026 Amely Paris · Design &amp; Gastronomie</span>
+    <span>Devis sous 24–48h · Prestations sur-mesure</span>
+  </div>
+  <img class="footer__deco-fleurs" src="assets/img/fleurs-footer.png" alt="">
+  <img class="footer__deco-logo" src="assets/img/logo-footer.png" alt="">
+</footer>
+
+<script src="assets/js/main.js"></script>
+<script>
+(function() {
+  // Intro — retire après 2.8s
+  var intro = document.getElementById('amely-intro');
+  if (intro) {
+    intro.classList.add('hide');
+    setTimeout(function(){ intro.style.display='none'; }, 4900);
+  }
+  // Video hero autoplay
+  var v = document.getElementById('hero-video');
+  if (!v) return;
+  v.muted = true;
+  var p = v.play();
+  if (p !== undefined) {
+    p.catch(function() {
+      document.addEventListener('click', function retry() {
+        v.play();
+        document.removeEventListener('click', retry);
+      }, { once: true });
+    });
+  }
+})();
+</script>
+</body>
+</html>
