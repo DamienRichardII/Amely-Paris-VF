@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="fr">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config/supabase.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Devis — Amely Paris</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    :root{
+      --ink:#241914; --muted:#7e6a5f; --line:rgba(36,25,20,.10); --shadow:0 18px 45px rgba(36,25,20,.08);
+      --gold:#b78a57; --gold-dark:#8b6235; --new:#7b3f00; --warn:#a36d19; --ok:#2f7d57;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink);
+      background:linear-gradient(180deg, #fbf7f2 0%, #f6efe7 100%); min-height:100vh;
+    }
+    .wrap{width:min(1240px, calc(100% - 28px)); margin:0 auto; padding:22px 0 36px}
+    .topbar,.card{
+      background:rgba(255,255,255,.88); border:1px solid rgba(255,255,255,.72); backdrop-filter:blur(14px);
+      border-radius:24px; box-shadow:var(--shadow);
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px 20px; margin-bottom:18px; flex-wrap:wrap;
+      position:sticky; top:14px; z-index:10;
+    }
+    h1{margin:0; font-family:"Cormorant Garamond",Georgia,serif; font-size:44px; font-weight:500; line-height:.95}
+    .muted{color:var(--muted)}
+    .actions,.filters{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .btn, select, input{
+      min-height:46px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit;
+    }
+    .btn{
+      padding:0 16px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+    }
+    .btn-primary{background:linear-gradient(180deg,#c89a63 0%,#a97945 100%); color:#fff; border-color:transparent}
+    select,input{padding:0 16px}
+    .card{padding:18px}
+    .toolbar{display:flex; gap:10px; justify-content:space-between; align-items:center; flex-wrap:wrap; margin-bottom:16px}
+    .list{display:grid; gap:12px}
+    .row{
+      display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,.8fr) auto auto;
+      gap:12px; align-items:center; border:1px solid var(--line); border-radius:18px; padding:14px; background:#fffdfb;
+    }
+    .main strong{display:block; margin-bottom:4px}
+    .main span,.meta{display:block; color:var(--muted); font-size:13px; line-height:1.45; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .badge{
+      display:inline-flex; align-items:center; justify-content:center; min-width:110px; padding:10px 12px; border-radius:999px;
+      font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    }
+    .badge-new{background:rgba(123,63,0,.08); color:var(--new)}
+    .badge-progress{background:rgba(163,109,25,.10); color:var(--warn)}
+    .badge-closed{background:rgba(47,125,87,.10); color:var(--ok)}
+    .empty{padding:22px; border:1px dashed rgba(36,25,20,.14); border-radius:18px; color:var(--muted)}
+    @media (max-width:1080px){
+      .row{grid-template-columns:1fr 1fr auto auto}
+      .meta.hide-mobile{display:none}
+    }
+    @media (max-width:760px){
+      .wrap{width:min(100% - 16px,100%)}
+      .topbar,.card{padding:16px}
+      .topbar{position:static}
+      .row{grid-template-columns:1fr}
+      .badge,.row .btn{width:100%}
+      .actions > *,.filters > *{flex:1 1 100%}
+      h1{font-size:38px}
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div>
+        <h1>Liste des devis</h1>
+        <div class="muted">Consultation complète des demandes reçues</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="admin.html">Dashboard</a>
+        <a class="btn" href="login.html">Connexion</a>
+        <button class="btn btn-primary" id="logoutBtn" type="button">Déconnexion</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="toolbar">
+        <div class="filters">
+          <input id="searchInput" type="search" placeholder="Rechercher un nom, email, lieu…">
+          <select id="statusFilter">
+            <option value="all">Tous les statuts</option>
+            <option value="new">Nouveaux</option>
+            <option value="in_progress">En cours</option>
+            <option value="closed">Clôturés</option>
+          </select>
+        </div>
+        <div class="muted" id="counter">Chargement…</div>
+      </div>
+
+      <div class="list" id="quotesList">
+        <div class="empty">Chargement des devis…</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="config/supabase.js"></script>
+  <script>
+    (function () {
+      const quotesList = document.getElementById('quotesList');
+      const counter = document.getElementById('counter');
+      const searchInput = document.getElementById('searchInput');
+      const statusFilter = document.getElementById('statusFilter');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      let allQuotes = [];
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function badgeClass(status) {
+        switch ((status || '').toLowerCase()) {
+          case 'in_progress': return 'badge badge-progress';
+          case 'closed': return 'badge badge-closed';
+          default: return 'badge badge-new';
+        }
+      }
+
+      function labelStatus(status) {
+        switch ((status || '').toLowerCase()) {
+          case 'in_progress': return 'En cours';
+          case 'closed': return 'Clôturé';
+          default: return 'Nouveau';
+        }
+      }
+
+      function formatDate(date) {
+        if (!date) return 'Date non renseignée';
+        const d = new Date(date);
+        if (Number.isNaN(d.getTime())) return String(date);
+        return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+      }
+
+      function renderRows(rows) {
+        counter.textContent = rows.length + ' devis affiché' + (rows.length > 1 ? 's' : '');
+
+        if (!rows.length) {
+          quotesList.innerHTML = '<div class="empty">Aucun devis ne correspond aux filtres actuels.</div>';
+          return;
+        }
+
+        quotesList.innerHTML = rows.map(item => {
+          const id = encodeURIComponent(item.id);
+          return `
+            <article class="row">
+              <div class="main">
+                <strong>${escapeHtml(item.full_name || 'Client')}</strong>
+                <span>${escapeHtml(item.email || 'Email non renseigné')}</span>
+              </div>
+              <div class="meta">
+                ${(item.event_type ? escapeHtml(item.event_type) : 'Type non renseigné')}<br>
+                ${escapeHtml(formatDate(item.created_at))}
+              </div>
+              <div class="meta hide-mobile">
+                ${(item.location ? escapeHtml(item.location) : 'Lieu non renseigné')}<br>
+                ${(item.guest_count ? escapeHtml(item.guest_count) + ' personnes' : 'Participants non renseignés')}
+              </div>
+              <span class="${badgeClass(item.status)}">${labelStatus(item.status)}</span>
+              <a class="btn" href="id.html?id=${id}">Voir</a>
+            </article>
+          `;
+        }).join('');
+      }
+
+      function applyFilters() {
+        const q = searchInput.value.trim().toLowerCase();
+        const status = statusFilter.value;
+
+        const filtered = allQuotes.filter(item => {
+          const haystack = [
+            item.full_name, item.email, item.phone, item.event_type, item.location, item.budget, item.message
+          ].join(' ').toLowerCase();
+
+          const matchesSearch = !q || haystack.includes(q);
+          const matchesStatus = status === 'all' || (item.status || 'new') === status;
+          return matchesSearch && matchesStatus;
+        });
+
+        renderRows(filtered);
+      }
+
+      async function requireSession() {
+        if (!window.supabase) {
+          quotesList.innerHTML = '<div class="empty">Le client Supabase n\'est pas chargé.</div>';
+          return false;
+        }
+        const { data } = await window.supabase.auth.getSession();
+        if (!data.session) {
+          window.location.href = 'login.html';
+          return false;
+        }
+        return true;
+      }
+
+      async function loadQuotes() {
+        const ok = await requireSession();
+        if (!ok) return;
+
+        const { data, error } = await window.supabase
+          .from('quote_requests')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          quotesList.innerHTML = '<div class="empty">Erreur de chargement : ' + escapeHtml(error.message) + '</div>';
+          counter.textContent = '0 devis';
+          return;
+        }
+
+        allQuotes = Array.isArray(data) ? data : [];
+        applyFilters();
+      }
+
+      searchInput.addEventListener('input', applyFilters);
+      statusFilter.addEventListener('change', applyFilters);
+
+      logoutBtn.addEventListener('click', async function () {
+        if (!window.supabase) return;
+        await window.supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
+
+      loadQuotes();
+    })();
+  </script>
+</body>
+</html>

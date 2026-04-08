@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="fr">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config/supabase.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Détail devis — Amely Paris</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    :root{
+      --ink:#241914; --muted:#7e6a5f; --line:rgba(36,25,20,.10); --shadow:0 18px 45px rgba(36,25,20,.08);
+      --gold:#b78a57; --gold-dark:#8b6235;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink);
+      background:linear-gradient(180deg, #fbf7f2 0%, #f6efe7 100%); min-height:100vh;
+    }
+    .wrap{width:min(1180px, calc(100% - 28px)); margin:0 auto; padding:22px 0 36px}
+    .topbar,.card{
+      background:rgba(255,255,255,.88); border:1px solid rgba(255,255,255,.72); backdrop-filter:blur(14px);
+      border-radius:24px; box-shadow:var(--shadow);
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px 20px; margin-bottom:18px; flex-wrap:wrap;
+      position:sticky; top:14px; z-index:10;
+    }
+    h1{margin:0; font-family:"Cormorant Garamond",Georgia,serif; font-size:44px; font-weight:500; line-height:.95}
+    .muted{color:var(--muted)}
+    .actions{display:flex; gap:10px; flex-wrap:wrap}
+    .btn, select{
+      min-height:46px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit;
+    }
+    .btn{
+      padding:0 16px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
+    }
+    .btn-primary{background:linear-gradient(180deg,#c89a63 0%,#a97945 100%); color:#fff; border-color:transparent}
+    select{padding:0 16px}
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+    .card{padding:20px}
+    .card h2{margin:0 0 14px; font-size:18px}
+    .fields{display:grid; gap:12px}
+    .field{padding:12px 0; border-bottom:1px solid var(--line)}
+    .field:last-child{border-bottom:0}
+    .label{display:block; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.12em; margin-bottom:6px}
+    .value{line-height:1.6; word-break:break-word}
+    .message-box{
+      min-height:220px; padding:18px; border-radius:18px; background:#fffdfb; border:1px solid var(--line); white-space:pre-wrap; line-height:1.7;
+    }
+    .statusbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px}
+    .notice{
+      margin-top:14px; padding:12px 14px; border-radius:14px; display:none; font-size:14px;
+    }
+    .notice.show{display:block}
+    .notice.error{background:#fff0f0; color:#8a2e2e; border:1px solid rgba(153,0,0,.14)}
+    .notice.success{background:#eef9f2; color:#256746; border:1px solid rgba(37,103,70,.15)}
+    @media (max-width:860px){
+      .grid{grid-template-columns:1fr}
+      .wrap{width:min(100% - 16px,100%)}
+      .topbar,.card{padding:16px}
+      .topbar{position:static}
+      h1{font-size:38px}
+      .actions > *,.statusbar > *{flex:1 1 100%}
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div>
+        <h1>Détail du devis</h1>
+        <div class="muted" id="subtitle">Chargement…</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="admin.html">Dashboard</a>
+        <a class="btn" href="devis.html">Retour liste</a>
+        <button class="btn btn-primary" id="logoutBtn" type="button">Déconnexion</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Informations client</h2>
+        <div class="fields" id="clientFields"></div>
+      </article>
+
+      <article class="card">
+        <h2>Informations événement</h2>
+        <div class="fields" id="eventFields"></div>
+
+        <div class="statusbar">
+          <select id="statusSelect">
+            <option value="new">Nouveau</option>
+            <option value="in_progress">En cours</option>
+            <option value="closed">Clôturé</option>
+          </select>
+          <button class="btn btn-primary" id="saveStatusBtn" type="button">Enregistrer le statut</button>
+        </div>
+
+        <div id="notice" class="notice"></div>
+      </article>
+
+      <article class="card" style="grid-column:1 / -1;">
+        <h2>Message du client</h2>
+        <div class="message-box" id="messageBox">Chargement…</div>
+      </article>
+    </section>
+  </div>
+
+  <script src="config/supabase.js"></script>
+  <script>
+    (function () {
+      const subtitle = document.getElementById('subtitle');
+      const clientFields = document.getElementById('clientFields');
+      const eventFields = document.getElementById('eventFields');
+      const messageBox = document.getElementById('messageBox');
+      const statusSelect = document.getElementById('statusSelect');
+      const saveStatusBtn = document.getElementById('saveStatusBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const notice = document.getElementById('notice');
+
+      let devisId = null;
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function setNotice(text, type) {
+        notice.textContent = text;
+        notice.className = 'notice show ' + type;
+      }
+
+      function formatDate(date) {
+        if (!date) return 'Non renseigné';
+        const d = new Date(date);
+        if (Number.isNaN(d.getTime())) return String(date);
+        return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
+      }
+
+      function field(label, value) {
+        return `
+          <div class="field">
+            <span class="label">${escapeHtml(label)}</span>
+            <div class="value">${escapeHtml(value || 'Non renseigné')}</div>
+          </div>
+        `;
+      }
+
+      async function requireSession() {
+        if (!window.supabase) {
+          setNotice("Le client Supabase n'est pas chargé.", "error");
+          return false;
+        }
+        const { data } = await window.supabase.auth.getSession();
+        if (!data.session) {
+          window.location.href = 'login.html';
+          return false;
+        }
+        return true;
+      }
+
+      function readIdFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('id');
+      }
+
+      async function loadQuote() {
+        const ok = await requireSession();
+        if (!ok) return;
+
+        devisId = readIdFromUrl();
+        if (!devisId || devisId === 'demo') {
+          subtitle.textContent = 'Aucun identifiant valide fourni.';
+          messageBox.textContent = 'Ajoute un paramètre du type ?id=UUID_DU_DEVIS dans l’URL.';
+          return;
+        }
+
+        const { data, error } = await window.supabase
+          .from('quote_requests')
+          .select('*')
+          .eq('id', devisId)
+          .single();
+
+        if (error) {
+          subtitle.textContent = 'Impossible de charger ce devis.';
+          messageBox.textContent = error.message || 'Erreur inconnue.';
+          return;
+        }
+
+        subtitle.textContent = (data.full_name || 'Client') + ' · ' + (data.email || 'email non renseigné');
+
+        clientFields.innerHTML = [
+          field('Nom complet', data.full_name),
+          field('Email', data.email),
+          field('Téléphone', data.phone)
+        ].join('');
+
+        eventFields.innerHTML = [
+          field('Type de prestation', data.event_type),
+          field('Date événement', data.event_date ? formatDate(data.event_date) : ''),
+          field('Nombre de personnes', data.guest_count ? data.guest_count + ' personnes' : ''),
+          field('Lieu', data.location),
+          field('Budget', data.budget),
+          field('Créé le', formatDate(data.created_at))
+        ].join('');
+
+        messageBox.textContent = data.message || 'Aucun message renseigné.';
+        statusSelect.value = data.status || 'new';
+      }
+
+      saveStatusBtn.addEventListener('click', async function () {
+        if (!devisId || !window.supabase) return;
+
+        const newStatus = statusSelect.value;
+
+        const { error } = await window.supabase
+          .from('quote_requests')
+          .update({ status: newStatus })
+          .eq('id', devisId);
+
+        if (error) {
+          setNotice(error.message || 'Impossible de mettre à jour le statut.', 'error');
+          return;
+        }
+
+        setNotice('Statut mis à jour avec succès.', 'success');
+      });
+
+      logoutBtn.addEventListener('click', async function () {
+        if (!window.supabase) return;
+        await window.supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
+
+      loadQuote();
+    })();
+  </script>
+</body>
+</html>

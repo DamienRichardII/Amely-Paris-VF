@@ -1,0 +1,4 @@
+const supabaseUrl = 'https://nexaugzkbhfeamjeuhad.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5leGF1Z3prYmhmZWFtamV1aGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NTk3MzQsImV4cCI6MjA5MTIzNTczNH0.AiCJAOU1Rc7d5aDlmZ_eWAUIwCdE8JREs96xNy-CzhA'
+
+window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey)

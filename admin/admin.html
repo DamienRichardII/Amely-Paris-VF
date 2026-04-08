@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="fr">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config/supabase.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin — Amely Paris</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    :root{
+      --bg:#f7f1ea; --paper:#fffaf5; --card:#ffffff; --ink:#241914; --muted:#7e6a5f;
+      --line:rgba(36,25,20,.10); --gold:#b78a57; --gold-dark:#8b6235;
+      --ok:#2f7d57; --warn:#a36d19; --new:#7b3f00;
+      --shadow:0 18px 45px rgba(36,25,20,.08); --radius:22px;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(183,138,87,.10), transparent 28%),
+        linear-gradient(180deg, #fbf7f2 0%, #f6efe7 100%);
+      min-height:100vh;
+    }
+    a{color:inherit;text-decoration:none} button{font:inherit}
+    .wrap{width:min(1180px, calc(100% - 32px)); margin:0 auto; padding:24px 0 40px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:22px;
+      padding:18px 22px; background:rgba(255,255,255,.70); border:1px solid rgba(255,255,255,.65);
+      backdrop-filter: blur(14px); border-radius:26px; box-shadow:var(--shadow); position:sticky; top:14px; z-index:20;
+    }
+    .brand h1{margin:0; font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(30px,4vw,44px); font-weight:500; letter-spacing:.02em; line-height:1}
+    .brand p{margin:6px 0 0; color:var(--muted); font-size:14px}
+    .top-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--line); background:#fff; color:var(--ink); padding:12px 16px; border-radius:999px;
+      transition:.22s ease; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:46px;
+    }
+    .btn:hover{transform:translateY(-1px); border-color:rgba(183,138,87,.45); box-shadow:0 10px 24px rgba(183,138,87,.12)}
+    .btn-primary{background:linear-gradient(180deg, #c89a63 0%, #a97945 100%); color:#fff; border-color:transparent}
+    .btn-primary:hover{background:linear-gradient(180deg, #cf9f68 0%, #93663a 100%); box-shadow:0 14px 28px rgba(169,121,69,.22)}
+    .hero{
+      background:linear-gradient(135deg, rgba(255,255,255,.84), rgba(255,248,241,.76));
+      border:1px solid rgba(255,255,255,.65); border-radius:32px; padding:32px; box-shadow:var(--shadow); margin-bottom:22px;
+    }
+    .eyebrow{display:inline-flex; align-items:center; gap:8px; color:var(--gold-dark); font-size:12px; letter-spacing:.18em; text-transform:uppercase; margin-bottom:14px}
+    .hero h2{margin:0 0 10px; font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(38px,6vw,62px); font-weight:500; line-height:.96; letter-spacing:.01em}
+    .hero p{margin:0; max-width:780px; color:var(--muted); font-size:16px; line-height:1.65}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:18px}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px}
+    .card h3{margin:0 0 14px; font-size:17px; font-weight:600; letter-spacing:.01em}
+    .kpi{grid-column:span 3; min-height:148px; display:flex; flex-direction:column; justify-content:space-between}
+    .kpi .label{color:var(--muted); font-size:13px; text-transform:uppercase; letter-spacing:.12em}
+    .kpi .value{font-size:40px; line-height:1; font-weight:700; letter-spacing:-.03em}
+    .kpi .foot{color:var(--muted); font-size:13px}
+    .wide{grid-column:span 8} .side{grid-column:span 4}
+    .section-head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
+    .section-head p{margin:0; color:var(--muted); font-size:14px}
+    .list{display:grid; gap:12px}
+    .quote{
+      display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,.9fr) auto auto; align-items:center; gap:12px;
+      padding:14px; border:1px solid var(--line); border-radius:18px; background:linear-gradient(180deg, #fffdfb, #fff);
+    }
+    .quote-main{min-width:0}
+    .quote-main strong{display:block; font-size:15px; margin-bottom:4px}
+    .quote-main span,.quote-meta{display:block; color:var(--muted); font-size:13px; line-height:1.45; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .badge{
+      display:inline-flex; align-items:center; justify-content:center; min-width:106px; padding:10px 12px; border-radius:999px;
+      font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; border:1px solid transparent;
+    }
+    .badge-new{background:rgba(123,63,0,.08); color:var(--new); border-color:rgba(123,63,0,.12)}
+    .badge-progress{background:rgba(163,109,25,.10); color:var(--warn); border-color:rgba(163,109,25,.16)}
+    .badge-closed{background:rgba(47,125,87,.10); color:var(--ok); border-color:rgba(47,125,87,.18)}
+    .empty{padding:20px; border:1px dashed rgba(36,25,20,.14); border-radius:18px; color:var(--muted); background:#fffdfa}
+    .quick-links{display:grid; gap:12px}
+    .quick-link{border:1px solid var(--line); border-radius:18px; padding:16px; background:linear-gradient(180deg, #fffdfb, #fff); transition:.2s ease}
+    .quick-link:hover{transform:translateY(-1px); border-color:rgba(183,138,87,.4)}
+    .quick-link strong{display:block; margin-bottom:6px}
+    .quick-link span{color:var(--muted); font-size:13px; line-height:1.5}
+    .status{margin-top:14px; padding:12px 14px; border-radius:16px; font-size:13px; background:#fff7ee; border:1px solid rgba(183,138,87,.15); color:#7d5b36}
+    @media (max-width:1080px){.kpi{grid-column:span 6}.wide,.side{grid-column:1 / -1}.quote{grid-template-columns:1fr auto;align-items:start}.quote-meta{grid-column:1 / -1}}
+    @media (max-width:700px){
+      .wrap{width:min(100% - 18px, 100%); padding-top:14px}.topbar,.hero,.card{padding:18px}.topbar{border-radius:20px}.hero{border-radius:24px}
+      .kpi{grid-column:1 / -1}.topbar{position:static}.top-actions{width:100%}.top-actions .btn{flex:1 1 auto}.quote{grid-template-columns:1fr}.badge,.quote .btn{width:100%}
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Amely Paris</h1>
+        <p>Administration · Devis clients</p>
+      </div>
+      <div class="top-actions">
+        <a class="btn" href="login.html">Connexion</a>
+        <a class="btn btn-primary" href="devis.html">Voir tous les devis</a>
+        <button class="btn" id="logoutBtn" type="button">Déconnexion</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">Back office · consultation</div>
+      <h2>Tableau de bord<br>devis</h2>
+      <p>
+        Cette page centralise l’accès rapide à la consultation des demandes de devis.
+        Elle se connecte à Supabase côté front avec ton client public, puis s’appuie sur
+        l’authentification admin et les policies RLS pour sécuriser la lecture.
+      </p>
+      <div class="status" id="sessionState">Vérification de session en cours…</div>
+    </section>
+
+    <section class="grid">
+      <article class="card kpi">
+        <div class="label">Total devis</div>
+        <div class="value" id="kpiTotal">—</div>
+        <div class="foot">Nombre total de demandes enregistrées</div>
+      </article>
+      <article class="card kpi">
+        <div class="label">Nouveaux</div>
+        <div class="value" id="kpiNew">—</div>
+        <div class="foot">Demandes au statut <strong>new</strong></div>
+      </article>
+      <article class="card kpi">
+        <div class="label">En cours</div>
+        <div class="value" id="kpiProgress">—</div>
+        <div class="foot">Demandes au statut <strong>in_progress</strong></div>
+      </article>
+      <article class="card kpi">
+        <div class="label">Clôturés</div>
+        <div class="value" id="kpiClosed">—</div>
+        <div class="foot">Demandes au statut <strong>closed</strong></div>
+      </article>
+
+      <article class="card wide">
+        <div class="section-head">
+          <div>
+            <h3>Derniers devis reçus</h3>
+            <p>Aperçu rapide avec lien direct vers la fiche détail</p>
+          </div>
+          <a class="btn" href="devis.html">Ouvrir la liste complète</a>
+        </div>
+        <div class="list" id="recentQuotes">
+          <div class="empty">Chargement des devis…</div>
+        </div>
+      </article>
+
+      <aside class="card side">
+        <div class="section-head">
+          <div>
+            <h3>Navigation admin</h3>
+            <p>Connexions entre tes pages front</p>
+          </div>
+        </div>
+
+        <div class="quick-links">
+          <a class="quick-link" href="login.html">
+            <strong>login.html</strong>
+            <span>Connexion admin avec Supabase Auth. À brancher avec ton <code>login.js</code>.</span>
+          </a>
+          <a class="quick-link" href="devis.html">
+            <strong>devis.html</strong>
+            <span>Liste complète des demandes. À brancher avec ton <code>devis.js</code>.</span>
+          </a>
+          <a class="quick-link" href="id.html?id=demo">
+            <strong>id.html?id=...</strong>
+            <span>Page détail d’un devis avec lecture par ID et changement de statut via <code>id.js</code>.</span>
+          </a>
+          <a class="quick-link" href="index.html">
+            <strong>Retour au site</strong>
+            <span>Revenir sur le front public sans exposer la partie admin.</span>
+          </a>
+        </div>
+
+        <div class="status">
+          Cette page suppose qu’un objet global <code>supabase</code> existe déjà,
+          chargé avant ce fichier depuis ton fichier local non versionné.
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      const sessionState = document.getElementById('sessionState');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const recentQuotes = document.getElementById('recentQuotes');
+      const kpiTotal = document.getElementById('kpiTotal');
+      const kpiNew = document.getElementById('kpiNew');
+      const kpiProgress = document.getElementById('kpiProgress');
+      const kpiClosed = document.getElementById('kpiClosed');
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function badgeClass(status) {
+        switch ((status || '').toLowerCase()) {
+          case 'in_progress': return 'badge badge-progress';
+          case 'closed': return 'badge badge-closed';
+          default: return 'badge badge-new';
+        }
+      }
+
+      function labelStatus(status) {
+        switch ((status || '').toLowerCase()) {
+          case 'in_progress': return 'En cours';
+          case 'closed': return 'Clôturé';
+          default: return 'Nouveau';
+        }
+      }
+
+      function formatDate(date) {
+        if (!date) return 'Date non renseignée';
+        const d = new Date(date);
+        if (Number.isNaN(d.getTime())) return String(date);
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+      }
+
+      async function requireSession() {
+        if (!window.supabase) {
+          sessionState.textContent = "Erreur : le client Supabase n'est pas chargé. Ajoute d'abord ton script local supabase.js avant admin.html.";
+          sessionState.style.background = '#fff0f0';
+          sessionState.style.borderColor = 'rgba(153,0,0,.14)';
+          sessionState.style.color = '#8a2e2e';
+          return null;
+        }
+
+        const { data, error } = await window.supabase.auth.getSession();
+        if (error) {
+          sessionState.textContent = "Impossible de vérifier la session admin.";
+          return null;
+        }
+        if (!data.session) {
+          window.location.href = 'login.html';
+          return null;
+        }
+
+        sessionState.textContent = 'Session active : ' + (data.session.user.email || 'admin connecté');
+        return data.session;
+      }
+
+      async function loadDashboard() {
+        const session = await requireSession();
+        if (!session) return;
+
+        const { data, error } = await window.supabase
+          .from('quote_requests')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          recentQuotes.innerHTML = '<div class="empty">Erreur de chargement des devis : ' + escapeHtml(error.message) + '</div>';
+          kpiTotal.textContent = '0';
+          kpiNew.textContent = '0';
+          kpiProgress.textContent = '0';
+          kpiClosed.textContent = '0';
+          return;
+        }
+
+        const rows = Array.isArray(data) ? data : [];
+        const total = rows.length;
+        const newCount = rows.filter(item => (item.status || 'new') === 'new').length;
+        const progressCount = rows.filter(item => item.status === 'in_progress').length;
+        const closedCount = rows.filter(item => item.status === 'closed').length;
+
+        kpiTotal.textContent = total;
+        kpiNew.textContent = newCount;
+        kpiProgress.textContent = progressCount;
+        kpiClosed.textContent = closedCount;
+
+        if (!rows.length) {
+          recentQuotes.innerHTML = '<div class="empty">Aucune demande de devis pour le moment.</div>';
+          return;
+        }
+
+        recentQuotes.innerHTML = rows.slice(0, 5).map(item => {
+          const fullName = item.full_name || 'Client';
+          const email = item.email || 'Email non renseigné';
+          const eventType = item.event_type || 'Type non renseigné';
+          const createdAt = formatDate(item.created_at);
+          const id = encodeURIComponent(item.id);
+
+          return `
+            <article class="quote">
+              <div class="quote-main">
+                <strong>${escapeHtml(fullName)}</strong>
+                <span>${escapeHtml(email)}</span>
+              </div>
+              <div class="quote-meta">${escapeHtml(eventType)} · ${escapeHtml(createdAt)}</div>
+              <span class="${badgeClass(item.status)}">${labelStatus(item.status)}</span>
+              <a class="btn" href="id.html?id=${id}">Voir</a>
+            </article>
+          `;
+        }).join('');
+      }
+
+      logoutBtn.addEventListener('click', async function () {
+        if (!window.supabase) return;
+        await window.supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
+
+      loadDashboard();
+    })();
+  </script>
+</body>
+</html>
