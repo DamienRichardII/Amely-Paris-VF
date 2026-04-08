@@ -1,0 +1,35 @@
+MISSION CRITIQUE — AMEL EVENT PARIS / FILIALE BRUNCH — EXÉCUTION CHIRURGICALE
+
+À partir de la version actuelle validée du site, effectuer uniquement les modifications ci-dessous, sans rien changer d’autre.
+
+OBJECTIF UNIQUE
+Exécuter précisément les demandes suivantes :
+- page `traiteur-formats.html` : remplacer le hero actuel par la même vidéo hero que `index.html`
+- page `animations-culinaires.html` : remplacer le hero actuel par la même vidéo hero que `index.html`
+- page `animations-culinaires.html` : reprendre la mise en forme de la section formats de `traiteur-formats.html` pour la section formats de cette page
+- page `corporate.html` : remplacer le hero actuel par la même vidéo hero que `index.html`
+- page `notre-maison.html` : remplacer le hero actuel par la même vidéo hero que `index.html`
+- page `scenographie-design.html` : remplacer le hero actuel par la même vidéo hero que `index.html`
+- page `scenographie-design.html` : remplacer l’image de la section « Notre approche » par la PJ2 fournie
+- supprimer la page `references-partenariats.html`
+- page `faq.html` : remplacer le hero actuel par la même vidéo hero que `index.html`
+- page `degustation-showroom.html` : remplacer le hero actuel par la même vidéo hero que `index.html`
+- page `degustation-showroom.html` : remplacer l’image de la section « Le Loft 96 » par la PJ3 fournie
+- page `contact.html` : remplacer le hero actuel par la même vidéo hero que `index.html`
+
+RÈGLE ABSOLUE
+- ne toucher à rien d’autre
+- ne pas modifier le header en dehors de la suppression du lien vers la page supprimée
+- ne pas modifier le footer en dehors de la suppression du lien vers la page supprimée
+- ne pas changer les textes, CTA, espacements, typos, couleurs ou animations existantes
+- ne pas changer les autres images
+- ne pas refaire la structure du site
+- ne pas casser les chemins d’assets
+- conserver une exécution propre, stable, responsive et premium
+
+EXIGENCE TECHNIQUE
+- utiliser exactement le même asset vidéo hero que `index.html`
+- intégrer les nouvelles PJ dans `assets/gallery/`
+- fournir l’ensemble du dossier du site mis à jour prêt à remplacer l’existant
+- vérifier que toutes les pages modifiées pointent vers des assets existants
+- supprimer proprement les liens vers la page Références devenue inexistante pour éviter tout lien cassé

@@ -1,0 +1,54 @@
+MISSION CRITIQUE — AMELY EVENT PARIS — CORRECTION CHIRURGICALE CORPORATE + HEADER DROPDOWN
+
+À partir de la dernière version actuelle validée du site, corriger uniquement les 2 points suivants, sans modifier quoi que ce soit d’autre dans le projet.
+
+CONTEXTE
+Le site est globalement validé.
+La vidéo hero est correcte.
+Le seul objectif est de restaurer les bons visuels sur la page corporate.html à partir de la version précédente du site, puis de corriger le comportement du menu déroulant du header sur l’ensemble du site.
+
+OBJECTIF UNIQUE
+1. PAGE corporate.html
+Restaurer exactement les bonnes images précédemment présentes sur :
+- la section formats
+- la section brand experience
+- la section références
+- la section process
+
+Source de vérité pour ces images :
+- PJ2 = version précédente du site
+
+IMPORTANT :
+- ne pas changer la vidéo hero actuelle de corporate.html
+- ne pas modifier les textes
+- ne pas modifier la structure des blocs
+- ne pas modifier les CTA
+- ne pas modifier le footer
+- ne pas modifier les autres pages hors nécessité liée au header global
+- ne pas remplacer les images par d’autres choix créatifs
+- remettre strictement les bons assets de la version précédente
+
+2. HEADER — TOUT LE SITE
+Corriger le menu déroulant du header pour que la navigation soit stable au survol :
+- actuellement, le dropdown disparaît quand on passe la souris du CTA principal vers les liens du menu déroulant
+- il faut supprimer ce décrochage
+- le menu doit rester visible et navigable tant que l’utilisateur est dans la zone logique du dropdown
+- conserver le design actuel
+- ne pas modifier le style visuel du header sauf ajustement technique invisible nécessaire à la stabilité
+
+RÈGLE ABSOLUE
+- intervention chirurgicale uniquement
+- ne toucher à rien d’autre
+- ne pas casser le responsive
+- ne pas casser les effets existants
+- ne pas changer la DA
+- ne pas reformuler les contenus
+- ne pas renommer les fichiers
+- ne pas déplacer des sections
+- ne pas modifier les autres pages en dehors du correctif global du header
+
+LIVRABLE ATTENDU
+- dossier complet du site corrigé
+- corporate.html corrigée avec les bons assets restaurés
+- comportement dropdown du header stabilisé sur tout le site
+- aucun autre changement

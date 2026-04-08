@@ -1,0 +1,55 @@
+MISSION CRITIQUE — AMELY EVENT PARIS — CORRECTION CHIRURGICALE DES HÉROS DE realisations.html ET journal.html
+
+À partir de la dernière version actuelle VALIDÉE du site, effectuer uniquement la correction suivante, sans modifier quoi que ce soit d’autre dans le projet.
+
+CONTEXTE
+Le site est désormais validé dans son ensemble.
+Deux oublis subsistent uniquement sur :
+- realisations.html
+- journal.html
+
+Le reste du site est totalement validé.
+Il est strictement interdit de toucher à autre chose sans autorisation supplémentaire.
+
+OBJECTIF UNIQUE
+Remplacer le hero actuel de :
+- realisations.html
+- journal.html
+par la même vidéo hero que celle utilisée sur index.html.
+
+EXIGENCES PRÉCISES
+Pour chacune des 2 pages :
+- reprendre exactement la vidéo hero de index.html
+- conserver le même rendu premium et immersif que sur les autres pages déjà corrigées
+- conserver un affichage propre, fluide et cohérent
+- conserver le bon comportement responsive
+- ne pas casser le chargement vidéo
+- ne pas casser le header
+- ne pas casser le contenu sous le hero
+- ne pas casser les animations existantes
+- ne pas modifier les textes
+- ne pas modifier les CTA
+- ne pas modifier les sections
+- ne pas modifier le footer
+- ne pas modifier les assets existants en dehors de cette correction
+- ne pas faire de refonte
+- ne pas faire d’interprétation créative
+
+RÈGLE ABSOLUE
+Intervention strictement limitée à :
+- realisations.html
+- journal.html
+
+Interdictions absolues :
+- ne toucher à aucune autre page
+- ne toucher ni au style global ni au JavaScript global sauf nécessité technique minimale directement liée à cette correction
+- ne faire aucune modification supplémentaire
+- ne corriger aucun autre détail non demandé
+- ne rien améliorer en dehors de l’objectif unique
+
+CRITÈRE DE RÉUSSITE
+Le résultat est valide uniquement si :
+- realisations.html affiche en hero la vidéo de index.html
+- journal.html affiche en hero la vidéo de index.html
+- le reste du site est strictement inchangé
+- aucune régression visuelle ou fonctionnelle n’est introduite
