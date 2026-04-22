@@ -713,3 +713,54 @@ h3{font-size:clamp(24px,2.8vw,40px);}
 
 
 .hero-media .hero-video{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* ══ RÉALISATIONS — Galerie thématique par onglets ══════════════════════
+   Styles dédiés à la section "Univers & scénographies" de realisations.html
+   Ne pas toucher aux autres sections ni aux autres pages.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* Onglets scrollables sur mobile sans barre de défilement visible */
+.rea-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;}
+.rea-tabs::-webkit-scrollbar{display:none;}
+
+/* Panneau thématique — masqué par défaut, visible quand actif */
+.rea-panel{display:none;}
+.rea-panel.is-active{display:block;}
+
+/* Notice "Photos à venir" — à supprimer quand les photos sont ajoutées */
+.rea-empty{
+  text-align:center;
+  padding:72px 28px 56px;
+  color:var(--muted);
+  border-top:1px solid var(--line);
+  margin-top:2px;
+}
+.rea-empty .kicker{
+  display:flex;justify-content:center;
+  margin-bottom:14px;color:var(--gold);
+}
+.rea-empty p{font-size:13px;color:var(--muted);letter-spacing:.04em;}
+.rea-path{
+  font-family:"Courier New",Courier,monospace;
+  font-size:11px;
+  background:var(--paper);
+  padding:5px 12px;
+  letter-spacing:.04em;
+  color:var(--ink);
+  display:inline-block;
+  margin-top:10px;
+  border:1px solid var(--line);
+}
+
+@media(max-width:768px){
+  .rea-tabs{margin-bottom:32px;}
+}
+
+/* ══ CORPORATE — Grille process 4 colonnes / 8 événements ══ */
+.editorial--4{grid-template-columns:repeat(4,1fr);}
+@media(max-width:1024px){.editorial--4{grid-template-columns:1fr 1fr;}}
+@media(max-width:768px){.editorial--4{grid-template-columns:1fr;}}
+
+/* ══ JOURNAL — Grille 2 cartes ══ */
+.journal-grid--2{grid-template-columns:1fr 1fr;max-width:900px;}
+@media(max-width:768px){.journal-grid--2{grid-template-columns:1fr;}}
