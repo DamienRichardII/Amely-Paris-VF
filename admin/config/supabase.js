@@ -1,4 +1,4 @@
-const supabaseUrl = 'https://nexaugzkbhfeamjeuhad.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5leGF1Z3prYmhmZWFtamV1aGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NTk3MzQsImV4cCI6MjA5MTIzNTczNH0.AiCJAOU1Rc7d5aDlmZ_eWAUIwCdE8JREs96xNy-CzhA'
+const supabaseUrl = 'https://ltwwjhapdxhpkwvpabva.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0d3dqaGFwZHhocGt3dnBhYnZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyNjMyMjMsImV4cCI6MjA5NDgzOTIyM30.p3aUKEu2qxpygNXiI4BOXdl0VcgDw6OliLls6HbQG84'
 
 window.supabase = supabase.createClient(supabaseUrl, supabaseAnonKey)

@@ -60,5 +60,16 @@
 
     showMessage('Votre demande de devis a bien été envoyée.', 'success');
     form.reset();
+
+    window.supabase.functions
+      .invoke('send-quote-emails', { body: payload })
+      .then(function (result) {
+        if (result && result.error) {
+          console.error('Erreur envoi emails de confirmation :', result.error);
+        }
+      })
+      .catch(function (err) {
+        console.error('Erreur envoi emails de confirmation :', err);
+      });
   });
 })();
