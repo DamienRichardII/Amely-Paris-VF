@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="fr">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config/supabase.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion des médias — Amely Paris</title>
+  <meta name="robots" content="noindex,nofollow"><link rel="icon" href="../favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <style>
+    :root{
+      --bg:#f7f1ea; --paper:#fffaf5; --card:#ffffff; --ink:#241914; --muted:#7e6a5f;
+      --line:rgba(36,25,20,.10); --gold:#b78a57; --gold-dark:#8b6235;
+      --ok:#2f7d57; --warn:#a36d19; --new:#7b3f00;
+      --shadow:0 18px 45px rgba(36,25,20,.08); --radius:22px;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(183,138,87,.10), transparent 28%),
+        linear-gradient(180deg, #fbf7f2 0%, #f6efe7 100%);
+      min-height:100vh;
+    }
+    a{color:inherit;text-decoration:none} button{font:inherit}
+    .wrap{width:min(1180px, calc(100% - 32px)); margin:0 auto; padding:24px 0 60px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:22px;
+      padding:18px 22px; background:rgba(255,255,255,.70); border:1px solid rgba(255,255,255,.65);
+      backdrop-filter: blur(14px); border-radius:26px; box-shadow:var(--shadow); position:sticky; top:14px; z-index:20;
+    }
+    .brand h1{margin:0; font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(28px,4vw,40px); font-weight:500; letter-spacing:.02em; line-height:1}
+    .brand p{margin:6px 0 0; color:var(--muted); font-size:13px}
+    .top-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--line); background:#fff; color:var(--ink); padding:12px 16px; border-radius:999px;
+      transition:.22s ease; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:46px;
+    }
+    .btn:hover{transform:translateY(-1px); border-color:rgba(183,138,87,.45); box-shadow:0 10px 24px rgba(183,138,87,.12)}
+    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none; box-shadow:none}
+    .btn-primary{background:linear-gradient(180deg, #c89a63 0%, #a97945 100%); color:#fff; border-color:transparent}
+    .btn-primary:hover{background:linear-gradient(180deg, #cf9f68 0%, #93663a 100%); box-shadow:0 14px 28px rgba(169,121,69,.22)}
+    .btn-sm{min-height:38px; padding:0 14px; font-size:13px}
+    .btn-danger{color:#8a2e2e; border-color:rgba(153,0,0,.18)}
+    .hero{
+      background:linear-gradient(135deg, rgba(255,255,255,.84), rgba(255,248,241,.76));
+      border:1px solid rgba(255,255,255,.65); border-radius:32px; padding:32px; box-shadow:var(--shadow); margin-bottom:22px;
+    }
+    .eyebrow{display:inline-flex; align-items:center; gap:8px; color:var(--gold-dark); font-size:12px; letter-spacing:.18em; text-transform:uppercase; margin-bottom:14px}
+    .hero h2{margin:0 0 10px; font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(34px,5vw,52px); font-weight:500; line-height:.98; letter-spacing:.01em}
+    .hero p{margin:0; max-width:820px; color:var(--muted); font-size:15px; line-height:1.65}
+    .status{margin-top:14px; padding:12px 14px; border-radius:16px; font-size:13px; background:#fff7ee; border:1px solid rgba(183,138,87,.15); color:#7d5b36}
+    .limits{margin-top:14px; font-size:12px; color:var(--muted); display:flex; gap:18px; flex-wrap:wrap}
+    .limits strong{color:var(--ink)}
+
+    .toolbar{
+      display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;
+      background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.65); border-radius:20px; padding:14px 16px;
+      box-shadow:var(--shadow);
+    }
+    .toolbar input[type="search"], .toolbar select{
+      border:1px solid var(--line); background:#fff; border-radius:14px; padding:0 14px; min-height:44px;
+      font:inherit; color:var(--ink);
+    }
+    .toolbar input[type="search"]{flex:1 1 220px; min-width:180px}
+    .toolbar select{flex:0 0 auto}
+    .toolbar .result-count{font-size:12px; color:var(--muted); white-space:nowrap}
+
+    .page-group{margin-bottom:26px}
+    .page-group-title{
+      font-family:"Cormorant Garamond", Georgia, serif; font-style:italic; font-size:26px; font-weight:500;
+      margin:0 0 14px; padding-left:4px;
+    }
+    .section-group{margin-bottom:18px}
+    .section-group-title{
+      font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold-dark); font-weight:700;
+      margin:0 0 10px; padding-left:4px;
+    }
+    .slot-list{display:grid; gap:12px}
+    .slot-card{
+      display:grid; grid-template-columns:96px 1fr auto; gap:16px; align-items:center;
+      background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; box-shadow:0 8px 20px rgba(36,25,20,.04);
+    }
+    .slot-preview{
+      width:96px; height:72px; border-radius:12px; overflow:hidden; background:#f1ece3;
+      display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0;
+    }
+    .slot-preview img, .slot-preview video{width:100%; height:100%; object-fit:cover; display:block}
+    .slot-preview .badge-type{
+      position:absolute; bottom:4px; right:4px; background:rgba(36,25,20,.72); color:#fff;
+      font-size:9px; letter-spacing:.08em; text-transform:uppercase; padding:2px 6px; border-radius:6px;
+    }
+    .slot-info strong{display:block; font-size:14px; margin-bottom:4px}
+    .slot-info .slot-path{display:block; font-size:11px; color:var(--muted); margin-bottom:4px; font-family:ui-monospace,monospace}
+    .slot-info .slot-alt{display:block; font-size:12px; color:var(--muted)}
+    .slot-info .badge-accept{
+      display:inline-block; margin-top:6px; font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--gold-dark); background:rgba(183,138,87,.10); border:1px solid rgba(183,138,87,.18);
+      padding:3px 8px; border-radius:8px;
+    }
+    .slot-meta{display:block; margin-top:6px; font-size:11px; color:var(--muted)}
+    .alt-edit{display:flex; align-items:center; gap:6px; margin-top:8px}
+    .alt-edit input{
+      flex:1; min-width:0; font-size:12px; border:1px solid var(--line); border-radius:8px; padding:6px 8px; font:inherit;
+      background:#fffdfa;
+    }
+    .alt-edit button{
+      flex-shrink:0; min-height:30px; padding:0 10px; font-size:11px; border-radius:8px; border:1px solid var(--line);
+      background:#fff; cursor:pointer;
+    }
+    .alt-edit button:disabled{opacity:.35; cursor:not-allowed}
+    .view-link{display:inline-block; margin-top:4px; font-size:11px; color:var(--gold-dark); text-decoration:underline; white-space:nowrap}
+    .slot-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center}
+    .order-btns{display:flex; flex-direction:column; gap:4px}
+    .order-btns button{
+      width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; font-size:12px; padding:0;
+    }
+    .order-btns button:disabled{opacity:.3; cursor:not-allowed}
+    .empty, .loading-state{padding:40px 20px; text-align:center; border:1px dashed rgba(36,25,20,.14); border-radius:18px; color:var(--muted); background:#fffdfa}
+
+    /* Modal remplacement */
+    .modal-overlay{
+      position:fixed; inset:0; background:rgba(20,14,10,.55); backdrop-filter:blur(4px);
+      display:none; align-items:center; justify-content:center; z-index:200; padding:20px;
+    }
+    .modal-overlay.show{display:flex}
+    .modal{
+      width:min(560px, 100%); max-height:90vh; overflow-y:auto; background:#fff; border-radius:24px; padding:26px;
+      box-shadow:0 30px 70px rgba(0,0,0,.3);
+    }
+    .modal h3{margin:0 0 4px; font-family:"Cormorant Garamond", Georgia, serif; font-size:26px; font-weight:500}
+    .modal .modal-sub{margin:0 0 18px; color:var(--muted); font-size:13px}
+    .drop-zone{
+      border:1.5px dashed rgba(183,138,87,.4); border-radius:16px; padding:28px 16px; text-align:center;
+      cursor:pointer; background:#fffaf3; transition:.2s ease;
+    }
+    .drop-zone:hover{border-color:var(--gold); background:#fdf5e9}
+    .drop-zone.dragover{border-color:var(--gold); background:#fbeedb}
+    .drop-zone p{margin:0; font-size:13px; color:var(--muted)}
+    .preview-box{margin-top:16px; display:none}
+    .preview-box.show{display:block}
+    .preview-box img, .preview-box video{width:100%; max-height:340px; object-fit:contain; border-radius:14px; background:#f1ece3; display:block}
+    .preview-meta{margin-top:10px; font-size:12px; color:var(--muted); display:grid; gap:4px}
+    .modal-actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap}
+    .modal-actions > *{flex:1 1 auto}
+    .modal-msg{margin-top:14px; padding:12px 14px; border-radius:14px; font-size:13px; display:none}
+    .modal-msg.show{display:block}
+    .modal-msg.error{background:#fff0f0; color:#8a2e2e; border:1px solid rgba(153,0,0,.14)}
+    .modal-msg.success{background:#eef9f2; color:#256746; border:1px solid rgba(37,103,70,.15)}
+    .modal-msg.info{background:#fff7ee; color:#7d5b36; border:1px solid rgba(183,138,87,.18)}
+    .modal-close{float:right; background:none; border:none; cursor:pointer; font-size:20px; color:var(--muted); line-height:1}
+
+    @media (max-width:700px){
+      .wrap{width:min(100% - 18px, 100%); padding-top:14px}
+      .topbar,.hero{padding:18px}
+      .topbar{border-radius:20px; position:static}
+      .hero{border-radius:24px}
+      .slot-card{grid-template-columns:72px 1fr; grid-template-areas:"preview info" "actions actions"}
+      .slot-preview{grid-area:preview; width:72px; height:56px}
+      .slot-info{grid-area:info}
+      .slot-actions{grid-area:actions; justify-content:flex-start; margin-top:8px}
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Amely Paris</h1>
+        <p>Administration · Médiathèque</p>
+      </div>
+      <div class="top-actions">
+        <a class="btn" href="admin.html">Dashboard</a>
+        <a class="btn" href="historique.html">Historique</a>
+        <a class="btn" href="avis.html">Avis clients</a>
+        <a class="btn" href="contenus.html">Contenus</a>
+        <a class="btn" href="agenda.html">Agenda</a>
+        <a class="btn" href="publications.html">Réalisations</a>
+        <a class="btn" href="stats.html">Stats</a>
+        <button class="btn" id="logoutBtn" type="button">Déconnexion</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">Back office · gestion des médias</div>
+      <h2>Gestion des médias</h2>
+      <p>
+        Remplacez les photos et vidéos affichées sur le site directement depuis votre ordinateur.
+        Aucune modification de code, aucun redéploiement : le changement apparaît sur le site en quelques secondes.
+      </p>
+      <div class="limits">
+        <span><strong>Images :</strong> JPG, PNG, WebP, AVIF</span>
+        <span><strong>Vidéos :</strong> MP4, WebM, MOV — 100&nbsp;Mo max</span>
+      </div>
+      <div class="status" id="sessionState">Vérification de session en cours…</div>
+    </section>
+
+    <div class="toolbar">
+      <input type="search" id="searchInput" placeholder="Rechercher un emplacement (ex: hero, galerie, corporate…)" aria-label="Rechercher un emplacement">
+      <select id="pageFilter" aria-label="Filtrer par page">
+        <option value="">Toutes les pages</option>
+      </select>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+
+    <div id="content">
+      <div class="loading-state" id="loadingState">Chargement de la médiathèque…</div>
+    </div>
+  </div>
+
+  <!-- Modal remplacement -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose" type="button" aria-label="Fermer">✕</button>
+      <h3 id="modalTitle">Remplacer le média</h3>
+      <p class="modal-sub" id="modalSub"></p>
+
+      <div class="drop-zone" id="dropZone">
+        <p><strong>Cliquez</strong> pour sélectionner un fichier depuis votre ordinateur<br>ou glissez-le ici</p>
+        <input type="file" id="fileInput" style="display:none">
+      </div>
+
+      <div class="preview-box" id="previewBox">
+        <div id="previewMedia"></div>
+        <div class="preview-meta" id="previewMeta"></div>
+      </div>
+
+      <div class="modal-msg" id="modalMsg"></div>
+
+      <div class="modal-actions">
+        <button class="btn" id="cancelBtn" type="button">Annuler</button>
+        <button class="btn btn-primary" id="confirmBtn" type="button" disabled>Confirmer le remplacement</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var BUCKET = 'site-media';
+      var content = document.getElementById('content');
+      var loadingState = document.getElementById('loadingState');
+      var sessionState = document.getElementById('sessionState');
+      var logoutBtn = document.getElementById('logoutBtn');
+
+      var modalOverlay = document.getElementById('modalOverlay');
+      var modalTitle = document.getElementById('modalTitle');
+      var modalSub = document.getElementById('modalSub');
+      var dropZone = document.getElementById('dropZone');
+      var fileInput = document.getElementById('fileInput');
+      var previewBox = document.getElementById('previewBox');
+      var previewMedia = document.getElementById('previewMedia');
+      var previewMeta = document.getElementById('previewMeta');
+      var modalMsg = document.getElementById('modalMsg');
+      var confirmBtn = document.getElementById('confirmBtn');
+      var cancelBtn = document.getElementById('cancelBtn');
+      var modalClose = document.getElementById('modalClose');
+
+      var currentUserEmail = null;
+      var activeSlot = null;
+      var activeFile = null;
+      var activeObjectUrl = null;
+      var isUploading = false;
+      var allSlots = [];
+
+      var PAGE_LABELS = {
+        home: "Page d'accueil",
+        contact: 'Contact',
+        'notre-maison': 'Notre maison',
+        'animations-culinaires': 'Animations culinaires',
+        'brunch-buffets': 'Brunch & Buffets',
+        corporate: 'Corporate',
+        'degustation-showroom': 'Showroom · Loft 96',
+        faq: 'FAQ',
+        journal: 'Journal',
+        'journal-commission-europeenne': 'Journal — Commission européenne',
+        realisations: 'Réalisations',
+        'scenographie-design': 'Scénographie',
+        'traiteur-formats': 'Traiteur & Formats'
+      };
+      var SECTION_LABELS = {
+        hero: 'Hero', presentation: 'Section Présentation', lookbook: 'Lookbook / Galerie',
+        gallery: 'Galerie', contact: 'Section Contact', formats: 'Formats',
+        composition: 'Composition type', articles: 'Articles'
+      };
+      var PAGE_ORDER = [
+        'home', 'notre-maison', 'brunch-buffets', 'traiteur-formats', 'animations-culinaires',
+        'corporate', 'realisations', 'journal', 'journal-commission-europeenne',
+        'scenographie-design', 'faq', 'degustation-showroom', 'contact'
+      ];
+      var PAGE_URL = {
+        home: '../index.html',
+        contact: '../contact.html',
+        'notre-maison': '../notre-maison.html',
+        'animations-culinaires': '../animations-culinaires.html',
+        'brunch-buffets': '../brunch-buffets.html',
+        corporate: '../corporate.html',
+        'degustation-showroom': '../degustation-showroom.html',
+        faq: '../faq.html',
+        journal: '../journal.html',
+        'journal-commission-europeenne': '../journal/commission-europeenne.html',
+        realisations: '../realisations.html',
+        'scenographie-design': '../scenographie-design.html',
+        'traiteur-formats': '../traiteur-formats.html'
+      };
+
+      var searchInput = document.getElementById('searchInput');
+      var pageFilter = document.getElementById('pageFilter');
+      var resultCount = document.getElementById('resultCount');
+
+      function resolveMediaUrl(url) {
+        if (!url) return url;
+        // Les URL Supabase Storage sont déjà absolues (http/https) : rien à faire.
+        if (/^https?:\/\//i.test(url)) return url;
+        // En consultation locale (fichier ouvert directement depuis le disque, sans serveur web),
+        // un chemin qui commence par "/" pointe vers la racine du disque et casse l'image.
+        // On le convertit alors en chemin relatif ("../assets/...") pour que ça fonctionne quand même.
+        if (window.location.protocol === 'file:' && url.charAt(0) === '/') {
+          return '..' + url;
+        }
+        return url;
+      }
+
+      function escapeHtml(v) {
+        return String(v == null ? '' : v)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function setModalMsg(text, type) {
+        modalMsg.textContent = text || '';
+        modalMsg.className = text ? 'modal-msg show ' + type : 'modal-msg';
+      }
+
+      async function requireSession() {
+        if (!window.supabase) {
+          sessionState.textContent = "Erreur : le client Supabase n'est pas chargé.";
+          sessionState.style.color = '#8a2e2e';
+          return null;
+        }
+        var res = await window.supabase.auth.getSession();
+        if (res.error) {
+          sessionState.textContent = 'Impossible de vérifier la session admin.';
+          return null;
+        }
+        if (!res.data.session) {
+          window.location.href = 'login.html';
+          return null;
+        }
+        currentUserEmail = res.data.session.user.email || 'admin';
+        sessionState.textContent = 'Session active : ' + currentUserEmail;
+        return res.data.session;
+      }
+
+      function slotTypeLabel(row) {
+        return row.media_type === 'video' ? 'Vidéo' : 'Image';
+      }
+      function acceptLabel(row) {
+        if (row.accept === 'both') return 'Photo ou vidéo acceptée';
+        if (row.accept === 'video') return 'Vidéo uniquement';
+        return 'Image uniquement';
+      }
+      function acceptAttr(row) {
+        if (row.accept === 'both') return 'image/*,video/*';
+        if (row.accept === 'video') return 'video/*';
+        return 'image/*';
+      }
+
+      function formatDate(iso) {
+        if (!iso) return '';
+        try {
+          var d = new Date(iso);
+          return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+            ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        } catch (e) { return iso; }
+      }
+
+      function renderSlotCard(row, isFirst, isLast) {
+        var isVideo = row.media_type === 'video';
+        var previewHtml = row.file_url
+          ? (isVideo
+              ? '<video src="' + escapeHtml(resolveMediaUrl(row.file_url)) + '" muted preload="metadata"></video>'
+              : '<img src="' + escapeHtml(resolveMediaUrl(row.file_url)) + '" alt="' + escapeHtml(row.alt_text || '') + '" loading="lazy">')
+          : '<span style="font-size:11px;color:var(--muted)">Aucun média</span>';
+
+        var restoreBtn = row.previous_file_url
+          ? '<button class="btn btn-sm" data-action="restore" data-id="' + row.id + '">Restaurer</button>'
+          : '';
+
+        var viewUrl = PAGE_URL[row.page_key];
+        var viewLink = viewUrl
+          ? '<a class="view-link" href="' + escapeHtml(viewUrl) + '" target="_blank" rel="noopener">Voir sur le site ↗</a>'
+          : '';
+
+        var metaLine = row.updated_by
+          ? '<span class="slot-meta">Modifié par ' + escapeHtml(row.updated_by) + (row.updated_at ? ' le ' + formatDate(row.updated_at) : '') + '</span>'
+          : '';
+
+        var orderBtns =
+          '<div class="order-btns">' +
+            '<button type="button" data-action="move-up" data-id="' + row.id + '" title="Monter"' + (isFirst ? ' disabled' : '') + '>▲</button>' +
+            '<button type="button" data-action="move-down" data-id="' + row.id + '" title="Descendre"' + (isLast ? ' disabled' : '') + '>▼</button>' +
+          '</div>';
+
+        return (
+          '<div class="slot-card" data-id="' + row.id + '">' +
+            '<div class="slot-preview">' + previewHtml + '<span class="badge-type">' + slotTypeLabel(row) + '</span></div>' +
+            '<div class="slot-info">' +
+              '<strong>' + escapeHtml(row.label) + '</strong>' +
+              '<span class="slot-path">' + escapeHtml(row.page_key + '.' + row.section_key + '.' + row.slot_key) + '</span>' +
+              '<span class="badge-accept">' + acceptLabel(row) + '</span>' +
+              '<div class="alt-edit">' +
+                '<input type="text" data-alt-id="' + row.id + '" value="' + escapeHtml(row.alt_text || '') + '" placeholder="Texte alternatif (accessibilité, SEO)">' +
+                '<button type="button" data-action="save-alt" data-id="' + row.id + '" disabled>Enregistrer</button>' +
+              '</div>' +
+              metaLine + viewLink +
+            '</div>' +
+            '<div class="slot-actions">' +
+              orderBtns +
+              '<button class="btn btn-sm btn-primary" data-action="replace" data-id="' + row.id + '">Remplacer</button>' +
+              restoreBtn +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      function sectionSiblings(pageKey, sectionKey) {
+        return allSlots
+          .filter(function (s) { return s.page_key === pageKey && s.section_key === sectionKey; })
+          .sort(function (a, b) { return a.display_order - b.display_order; });
+      }
+
+      function renderGroups(rows) {
+        if (!rows.length) {
+          content.innerHTML = '<div class="empty">Aucun résultat pour ce filtre.</div>';
+          return;
+        }
+
+        var byPage = {};
+        rows.forEach(function (r) {
+          byPage[r.page_key] = byPage[r.page_key] || {};
+          byPage[r.page_key][r.section_key] = byPage[r.page_key][r.section_key] || [];
+          byPage[r.page_key][r.section_key].push(r);
+        });
+
+        var html = '';
+        var pageKeys = Object.keys(byPage).sort(function (a, b) {
+          var ia = PAGE_ORDER.indexOf(a); var ib = PAGE_ORDER.indexOf(b);
+          if (ia === -1) ia = 999; if (ib === -1) ib = 999;
+          if (ia !== ib) return ia - ib;
+          return a.localeCompare(b);
+        });
+        pageKeys.forEach(function (pageKey) {
+          html += '<div class="page-group"><h2 class="page-group-title">' + escapeHtml(PAGE_LABELS[pageKey] || pageKey) + '</h2>';
+          Object.keys(byPage[pageKey]).forEach(function (sectionKey) {
+            var items = byPage[pageKey][sectionKey].slice().sort(function (a, b) { return a.display_order - b.display_order; });
+            var siblings = sectionSiblings(pageKey, sectionKey);
+            html += '<div class="section-group"><h3 class="section-group-title">' + escapeHtml(SECTION_LABELS[sectionKey] || sectionKey) + '</h3><div class="slot-list">';
+            items.forEach(function (row) {
+              var pos = siblings.findIndex(function (s) { return String(s.id) === String(row.id); });
+              var isFirst = pos <= 0;
+              var isLast = pos === -1 || pos === siblings.length - 1;
+              html += renderSlotCard(row, isFirst, isLast);
+            });
+            html += '</div></div>';
+          });
+          html += '</div>';
+        });
+        content.innerHTML = html;
+      }
+
+      function matchesFilter(row, term, pageValue) {
+        if (pageValue && row.page_key !== pageValue) return false;
+        if (!term) return true;
+        var haystack = [
+          row.label, row.page_key, row.section_key, row.slot_key, row.alt_text,
+          PAGE_LABELS[row.page_key], SECTION_LABELS[row.section_key]
+        ].filter(Boolean).join(' ').toLowerCase();
+        return haystack.indexOf(term) !== -1;
+      }
+
+      function renderFiltered() {
+        var term = (searchInput.value || '').trim().toLowerCase();
+        var pageValue = pageFilter.value || '';
+        var filtered = allSlots.filter(function (row) { return matchesFilter(row, term, pageValue); });
+        renderGroups(filtered);
+        resultCount.textContent = filtered.length + ' / ' + allSlots.length + ' emplacement(s)';
+      }
+
+      function populatePageFilter() {
+        var present = {};
+        allSlots.forEach(function (r) { present[r.page_key] = true; });
+        var keys = Object.keys(present).sort(function (a, b) {
+          var ia = PAGE_ORDER.indexOf(a); var ib = PAGE_ORDER.indexOf(b);
+          if (ia === -1) ia = 999; if (ib === -1) ib = 999;
+          if (ia !== ib) return ia - ib;
+          return a.localeCompare(b);
+        });
+        var current = pageFilter.value;
+        pageFilter.innerHTML = '<option value="">Toutes les pages</option>' + keys.map(function (k) {
+          return '<option value="' + escapeHtml(k) + '">' + escapeHtml(PAGE_LABELS[k] || k) + '</option>';
+        }).join('');
+        if (keys.indexOf(current) !== -1) pageFilter.value = current;
+      }
+
+      searchInput.addEventListener('input', renderFiltered);
+      pageFilter.addEventListener('change', renderFiltered);
+
+      async function loadSlots() {
+        content.innerHTML = '';
+        content.appendChild(loadingState);
+        var res = await window.supabase.from('media_slots').select('*').order('page_key').order('section_key').order('display_order');
+        if (res.error) {
+          content.innerHTML = '<div class="empty">Erreur de chargement : ' + escapeHtml(res.error.message) + '</div>';
+          return;
+        }
+        allSlots = res.data || [];
+        populatePageFilter();
+        renderFiltered();
+      }
+
+      function findSlot(id) {
+        return allSlots.find(function (r) { return String(r.id) === String(id); });
+      }
+
+      /* ── Modal remplacement ── */
+      function resetModal() {
+        activeFile = null;
+        if (activeObjectUrl) { URL.revokeObjectURL(activeObjectUrl); activeObjectUrl = null; }
+        previewBox.classList.remove('show');
+        previewMedia.innerHTML = '';
+        previewMeta.innerHTML = '';
+        fileInput.value = '';
+        confirmBtn.disabled = true;
+        setModalMsg('', '');
+        dropZone.style.display = '';
+      }
+
+      function openModal(slot) {
+        activeSlot = slot;
+        resetModal();
+        modalTitle.textContent = 'Remplacer le média';
+        modalSub.textContent = slot.label + ' — ' + acceptLabel(slot);
+        fileInput.setAttribute('accept', acceptAttr(slot));
+        modalOverlay.classList.add('show');
+      }
+
+      function closeModal() {
+        if (isUploading) return;
+        modalOverlay.classList.remove('show');
+        activeSlot = null;
+        resetModal();
+      }
+
+      function formatBytes(bytes) {
+        if (bytes < 1024) return bytes + ' o';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' Mo';
+      }
+
+      var isProcessingFile = false;
+
+      function compressImage(file) {
+        var MAX_DIM = 2000;
+        var SKIP_THRESHOLD = 2 * 1024 * 1024; // 2 Mo : en dessous, pas la peine de compresser
+        return new Promise(function (resolve) {
+          var objectUrl = URL.createObjectURL(file);
+          var img = new Image();
+          img.onload = function () {
+            var w = img.naturalWidth, h = img.naturalHeight;
+            var scale = Math.min(1, MAX_DIM / Math.max(w, h));
+            if (scale >= 1 && file.size <= SKIP_THRESHOLD) {
+              URL.revokeObjectURL(objectUrl);
+              resolve(file);
+              return;
+            }
+            var canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(w * scale));
+            canvas.height = Math.max(1, Math.round(h * scale));
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            var outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+            canvas.toBlob(function (blob) {
+              URL.revokeObjectURL(objectUrl);
+              if (!blob || blob.size >= file.size) { resolve(file); return; }
+              var ext = outType === 'image/png' ? 'png' : 'jpg';
+              var baseName = file.name.replace(/\.[^.]+$/, '');
+              var optimized = new File([blob], baseName + '-optimise.' + ext, { type: outType });
+              resolve(optimized);
+            }, outType, outType === 'image/jpeg' ? 0.85 : undefined);
+          };
+          img.onerror = function () { URL.revokeObjectURL(objectUrl); resolve(file); };
+          img.src = objectUrl;
+        });
+      }
+
+      async function handleFile(file) {
+        if (!activeSlot || isProcessingFile) return;
+        var isImage = file.type.indexOf('image/') === 0;
+        var isVideo = file.type.indexOf('video/') === 0;
+
+        if (activeSlot.accept === 'image' && !isImage) {
+          setModalMsg('Cet emplacement accepte uniquement une image.', 'error');
+          return;
+        }
+        if (activeSlot.accept === 'video' && !isVideo) {
+          setModalMsg('Cet emplacement accepte uniquement une vidéo.', 'error');
+          return;
+        }
+        if (!isImage && !isVideo) {
+          setModalMsg('Format non pris en charge. Utilisez une image ou une vidéo.', 'error');
+          return;
+        }
+
+        isProcessingFile = true;
+        var originalSize = file.size;
+        var workingFile = file;
+
+        if (isImage) {
+          setModalMsg('Optimisation de l\'image en cours…', 'info');
+          try { workingFile = await compressImage(file); } catch (e) { workingFile = file; }
+        }
+
+        var maxSize = isVideo ? 100 * 1024 * 1024 : 20 * 1024 * 1024;
+        if (workingFile.size > maxSize) {
+          setModalMsg('Fichier trop volumineux (' + formatBytes(workingFile.size) + '). Limite : ' + formatBytes(maxSize) + '.', 'error');
+          isProcessingFile = false;
+          return;
+        }
+
+        setModalMsg('', '');
+        activeFile = workingFile;
+        if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+        activeObjectUrl = URL.createObjectURL(workingFile);
+
+        previewMedia.innerHTML = '';
+        if (isImage) {
+          var img = document.createElement('img');
+          img.src = activeObjectUrl;
+          previewMedia.appendChild(img);
+          var wasCompressed = workingFile !== file && workingFile.size < originalSize;
+          previewMeta.innerHTML = wasCompressed
+            ? '<span>' + escapeHtml(workingFile.name) + '</span><span>Taille optimisée : ' + formatBytes(originalSize) + ' → ' + formatBytes(workingFile.size) + ' (−' + Math.round((1 - workingFile.size / originalSize) * 100) + '%)</span>'
+            : '<span>' + escapeHtml(workingFile.name) + ' · ' + formatBytes(workingFile.size) + '</span>';
+        } else {
+          var video = document.createElement('video');
+          video.src = activeObjectUrl;
+          video.controls = true;
+          video.muted = true;
+          previewMedia.appendChild(video);
+          previewMeta.innerHTML = '<span>' + escapeHtml(workingFile.name) + ' · ' + formatBytes(workingFile.size) + '</span><span id="videoDuration">Durée : calcul en cours…</span>';
+          video.addEventListener('loadedmetadata', function () {
+            var d = Math.round(video.duration);
+            var mm = Math.floor(d / 60), ss = String(d % 60).padStart(2, '0');
+            var el = document.getElementById('videoDuration');
+            if (el) el.textContent = 'Durée : ' + mm + ':' + ss;
+          });
+        }
+        previewBox.classList.add('show');
+        dropZone.style.display = 'none';
+        confirmBtn.disabled = false;
+        isProcessingFile = false;
+      }
+
+      dropZone.addEventListener('click', function () { fileInput.click(); });
+      fileInput.addEventListener('change', function () {
+        if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+      });
+      ['dragenter', 'dragover'].forEach(function (evt) {
+        dropZone.addEventListener(evt, function (e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+      });
+      ['dragleave', 'drop'].forEach(function (evt) {
+        dropZone.addEventListener(evt, function (e) { e.preventDefault(); dropZone.classList.remove('dragover'); });
+      });
+      dropZone.addEventListener('drop', function (e) {
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+      });
+
+      cancelBtn.addEventListener('click', closeModal);
+      modalClose.addEventListener('click', closeModal);
+      modalOverlay.addEventListener('click', function (e) { if (e.target === modalOverlay) closeModal(); });
+
+      function slugify(name) {
+        return name.toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      }
+
+      confirmBtn.addEventListener('click', async function () {
+        if (!activeSlot || !activeFile || isUploading) return;
+        isUploading = true;
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+        setModalMsg('Envoi du fichier…', 'info');
+
+        try {
+          var ext = (activeFile.name.split('.').pop() || 'bin').toLowerCase();
+          var safeName = slugify(activeSlot.section_key + '-' + activeSlot.slot_key + '-' + Date.now() + '.' + ext);
+          var path = activeSlot.page_key + '/' + activeSlot.section_key + '/' + safeName;
+
+          var upload = await window.supabase.storage.from(BUCKET).upload(path, activeFile, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: activeFile.type
+          });
+          if (upload.error) throw upload.error;
+
+          var pub = window.supabase.storage.from(BUCKET).getPublicUrl(path);
+          var publicUrl = pub.data && pub.data.publicUrl;
+          if (!publicUrl) throw new Error('URL publique introuvable.');
+
+          var newMediaType = activeFile.type.indexOf('video/') === 0 ? 'video' : 'image';
+
+          var update = await window.supabase.from('media_slots').update({
+            previous_file_url: activeSlot.file_url,
+            previous_storage_path: activeSlot.storage_path,
+            replaced_at: new Date().toISOString(),
+            file_url: publicUrl,
+            storage_path: path,
+            media_type: newMediaType,
+            updated_by: currentUserEmail,
+            updated_at: new Date().toISOString()
+          }).eq('id', activeSlot.id);
+          if (update.error) throw update.error;
+
+          setModalMsg('Le média a été remplacé avec succès.', 'success');
+          await loadSlots();
+          setTimeout(closeModal, 900);
+        } catch (err) {
+          console.error(err);
+          setModalMsg('Impossible d\'envoyer le fichier. Veuillez réessayer.', 'error');
+        } finally {
+          isUploading = false;
+          confirmBtn.disabled = false;
+          cancelBtn.disabled = false;
+        }
+      });
+
+      /* ── Restauration ── */
+      async function restoreSlot(id) {
+        var slot = findSlot(id);
+        if (!slot || !slot.previous_file_url) return;
+        var ok = window.confirm('Restaurer la version précédente de « ' + slot.label + ' » ? Cette action remplace le média actuel.');
+        if (!ok) return;
+
+        var update = await window.supabase.from('media_slots').update({
+          file_url: slot.previous_file_url,
+          storage_path: slot.previous_storage_path,
+          previous_file_url: null,
+          previous_storage_path: null,
+          replaced_at: new Date().toISOString(),
+          updated_by: currentUserEmail,
+          updated_at: new Date().toISOString()
+        }).eq('id', id);
+
+        if (update.error) {
+          alert('Impossible de restaurer ce média : ' + update.error.message);
+          return;
+        }
+        await loadSlots();
+      }
+
+      async function moveSlot(id, direction) {
+        var slot = findSlot(id);
+        if (!slot) return;
+        var siblings = sectionSiblings(slot.page_key, slot.section_key);
+        var idx = siblings.findIndex(function (s) { return String(s.id) === String(id); });
+        var swapWith = direction === 'up' ? siblings[idx - 1] : siblings[idx + 1];
+        if (!swapWith) return;
+
+        var a = await window.supabase.from('media_slots').update({ display_order: swapWith.display_order }).eq('id', slot.id);
+        var b = await window.supabase.from('media_slots').update({ display_order: slot.display_order }).eq('id', swapWith.id);
+        if (a.error || b.error) {
+          alert('Impossible de réordonner ces emplacements.');
+          return;
+        }
+        await loadSlots();
+      }
+
+      async function saveAlt(id, input, btn) {
+        var value = input.value.trim();
+        btn.disabled = true;
+        var original = btn.textContent;
+        btn.textContent = 'Enregistrement…';
+        var res = await window.supabase.from('media_slots').update({
+          alt_text: value || null,
+          updated_by: currentUserEmail,
+          updated_at: new Date().toISOString()
+        }).eq('id', id);
+        if (res.error) {
+          btn.textContent = original;
+          btn.disabled = false;
+          alert("Impossible d'enregistrer le texte alternatif : " + res.error.message);
+          return;
+        }
+        var slot = findSlot(id);
+        if (slot) { slot.alt_text = value; slot.updated_by = currentUserEmail; slot.updated_at = new Date().toISOString(); }
+        btn.textContent = 'Enregistré ✓';
+        setTimeout(function () { btn.textContent = original; }, 1500);
+      }
+
+      content.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var action = btn.getAttribute('data-action');
+        var id = btn.getAttribute('data-id');
+        if (action === 'replace') {
+          var slot = findSlot(id);
+          if (slot) openModal(slot);
+        } else if (action === 'restore') {
+          restoreSlot(id);
+        } else if (action === 'move-up') {
+          moveSlot(id, 'up');
+        } else if (action === 'move-down') {
+          moveSlot(id, 'down');
+        } else if (action === 'save-alt') {
+          var row = content.querySelector('input[data-alt-id="' + id + '"]');
+          if (row) saveAlt(id, row, btn);
+        }
+      });
+
+      content.addEventListener('input', function (e) {
+        var input = e.target.closest('input[data-alt-id]');
+        if (!input) return;
+        var id = input.getAttribute('data-alt-id');
+        var slot = findSlot(id);
+        var btn = content.querySelector('button[data-action="save-alt"][data-id="' + id + '"]');
+        if (!btn) return;
+        var current = (slot && slot.alt_text) || '';
+        btn.disabled = input.value.trim() === current.trim();
+      });
+
+      logoutBtn.addEventListener('click', async function () {
+        if (!window.supabase) return;
+        await window.supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
+
+      (async function init() {
+        var session = await requireSession();
+        if (!session) return;
+        await loadSlots();
+      })();
+    })();
+  </script>
+<script src="../assets/js/admin-notifications.js"></script></body>
+</html>

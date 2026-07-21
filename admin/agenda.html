@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="fr">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config/supabase.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agenda — Amely Paris</title>
+  <meta name="robots" content="noindex,nofollow"><link rel="icon" href="../favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <style>
+    :root{
+      --bg:#f7f1ea; --paper:#fffaf5; --card:#ffffff; --ink:#241914; --muted:#7e6a5f;
+      --line:rgba(36,25,20,.10); --gold:#b78a57; --gold-dark:#8b6235;
+      --ok:#2f7d57; --warn:#a36d19; --danger:#8a2e2e;
+      --shadow:0 18px 45px rgba(36,25,20,.08); --radius:22px;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(183,138,87,.10), transparent 28%),
+        linear-gradient(180deg, #fbf7f2 0%, #f6efe7 100%);
+      min-height:100vh;
+    }
+    a{color:inherit;text-decoration:none} button{font:inherit}
+    .wrap{width:min(1180px, calc(100% - 32px)); margin:0 auto; padding:24px 0 60px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:22px;
+      padding:18px 22px; background:rgba(255,255,255,.70); border:1px solid rgba(255,255,255,.65);
+      backdrop-filter: blur(14px); border-radius:26px; box-shadow:var(--shadow); position:sticky; top:14px; z-index:20;
+    }
+    .brand h1{margin:0; font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(28px,4vw,40px); font-weight:500; letter-spacing:.02em; line-height:1}
+    .brand p{margin:6px 0 0; color:var(--muted); font-size:13px}
+    .top-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--line); background:#fff; color:var(--ink); padding:12px 16px; border-radius:999px;
+      transition:.22s ease; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:46px;
+    }
+    .btn:hover{transform:translateY(-1px); border-color:rgba(183,138,87,.45); box-shadow:0 10px 24px rgba(183,138,87,.12)}
+    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .btn-primary{background:linear-gradient(180deg, #c89a63 0%, #a97945 100%); color:#fff; border-color:transparent}
+    .btn-sm{min-height:38px; padding:0 14px; font-size:13px}
+    .btn-danger{color:var(--danger); border-color:rgba(153,0,0,.18)}
+    .hero{
+      background:linear-gradient(135deg, rgba(255,255,255,.84), rgba(255,248,241,.76));
+      border:1px solid rgba(255,255,255,.65); border-radius:32px; padding:32px; box-shadow:var(--shadow); margin-bottom:22px;
+    }
+    .eyebrow{display:inline-flex; align-items:center; gap:8px; color:var(--gold-dark); font-size:12px; letter-spacing:.18em; text-transform:uppercase; margin-bottom:14px}
+    .hero h2{margin:0 0 10px; font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(34px,5vw,52px); font-weight:500; line-height:.98; letter-spacing:.01em}
+    .hero p{margin:0; max-width:820px; color:var(--muted); font-size:15px; line-height:1.65}
+    .status-line{margin-top:14px; padding:12px 14px; border-radius:16px; font-size:13px; background:#fff7ee; border:1px solid rgba(183,138,87,.15); color:#7d5b36}
+
+    .calendar-card{
+      background:var(--card); border:1px solid var(--line); border-radius:22px; padding:20px; box-shadow:0 8px 20px rgba(36,25,20,.04);
+      margin-bottom:20px;
+    }
+    .cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px}
+    .cal-head h3{margin:0; font-family:"Cormorant Garamond", Georgia, serif; font-style:italic; font-size:24px; font-weight:500; text-transform:capitalize}
+    .cal-nav{display:flex; gap:8px}
+    .cal-nav button{
+      width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:14px;
+    }
+    .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
+    .cal-dow{font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); text-align:center; padding-bottom:6px}
+    .cal-cell{
+      min-height:64px; border-radius:12px; border:1px solid var(--line); padding:6px; background:#fffdfa; cursor:pointer;
+      display:flex; flex-direction:column; gap:4px; transition:.15s ease;
+    }
+    .cal-cell:hover{border-color:rgba(183,138,87,.4)}
+    .cal-cell.out{opacity:.35}
+    .cal-cell.today{border-color:var(--gold); background:#fff7ee}
+    .cal-cell.selected{border-color:var(--gold-dark); box-shadow:0 0 0 2px rgba(183,138,87,.25)}
+    .cal-daynum{font-size:12px; font-weight:600}
+    .cal-dots{display:flex; gap:3px; flex-wrap:wrap}
+    .cal-dot{width:6px; height:6px; border-radius:50%; background:var(--gold)}
+    .cal-dot.confirme{background:var(--ok)}
+    .cal-dot.annule{background:var(--danger)}
+
+    .toolbar{
+      display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;
+      background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.65); border-radius:20px; padding:14px 16px;
+      box-shadow:var(--shadow);
+    }
+    .toolbar input[type="search"], .toolbar select{
+      border:1px solid var(--line); background:#fff; border-radius:14px; padding:0 14px; min-height:44px; font:inherit; color:var(--ink);
+    }
+    .toolbar .spacer{flex:1}
+    .toolbar .result-count{font-size:12px; color:var(--muted)}
+
+    .event-list{display:grid; gap:12px}
+    .event-card{
+      display:grid; grid-template-columns:90px 1fr auto; gap:16px; align-items:start;
+      background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:0 8px 20px rgba(36,25,20,.04);
+    }
+    .event-date{
+      text-align:center; background:#fff7ee; border-radius:14px; padding:10px 6px; border:1px solid rgba(183,138,87,.18);
+    }
+    .event-date .day{font-family:"Cormorant Garamond", Georgia, serif; font-size:26px; font-weight:600; line-height:1}
+    .event-date .month{font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted)}
+    .event-body strong{display:block; font-size:15px; margin-bottom:4px}
+    .event-meta{font-size:12px; color:var(--muted); margin:2px 0}
+    .badge{display:inline-flex; align-items:center; gap:4px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; padding:4px 9px; border-radius:999px; border:1px solid transparent; margin-right:6px}
+    .badge-prestation{color:var(--gold-dark); background:rgba(183,138,87,.10); border-color:rgba(183,138,87,.2)}
+    .badge-rdv_client{color:#3f7a5c; background:rgba(47,125,87,.08); border-color:rgba(47,125,87,.14)}
+    .badge-preparation{color:var(--warn); background:rgba(163,109,25,.10); border-color:rgba(163,109,25,.16)}
+    .badge-autre{color:var(--muted); background:rgba(126,106,95,.10); border-color:rgba(126,106,95,.16)}
+    .badge-planifie{color:var(--gold-dark); background:rgba(183,138,87,.10)}
+    .badge-confirme{color:var(--ok); background:rgba(47,125,87,.10)}
+    .badge-annule{color:var(--danger); background:rgba(138,46,46,.10)}
+    .event-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+    .empty, .loading-state{padding:40px 20px; text-align:center; border:1px dashed rgba(36,25,20,.14); border-radius:18px; color:var(--muted); background:#fffdfa}
+
+    .modal-overlay{position:fixed; inset:0; background:rgba(20,14,10,.55); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:200; padding:20px}
+    .modal-overlay.show{display:flex}
+    .modal{width:min(600px, 100%); max-height:92vh; overflow-y:auto; background:#fff; border-radius:24px; padding:26px; box-shadow:0 30px 70px rgba(0,0,0,.3)}
+    .modal h3{margin:0 0 4px; font-family:"Cormorant Garamond", Georgia, serif; font-size:26px; font-weight:500}
+    .modal .modal-sub{margin:0 0 18px; color:var(--muted); font-size:13px}
+    .modal-close{float:right; background:none; border:none; cursor:pointer; font-size:20px; color:var(--muted); line-height:1}
+    .form-grid{display:grid; gap:14px}
+    .form-row{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+    .form-field{display:grid; gap:6px}
+    .form-field label{font-size:12px; font-weight:600}
+    .form-field input, .form-field select, .form-field textarea{
+      border:1px solid var(--line); border-radius:14px; padding:10px 14px; font:inherit; color:var(--ink); background:#fffdfa; width:100%;
+    }
+    .form-field textarea{min-height:80px; resize:vertical}
+    .modal-msg{margin-top:6px; padding:12px 14px; border-radius:14px; font-size:13px; display:none}
+    .modal-msg.show{display:block}
+    .modal-msg.error{background:#fff0f0; color:var(--danger); border:1px solid rgba(153,0,0,.14)}
+    .modal-msg.success{background:#eef9f2; color:#256746; border:1px solid rgba(37,103,70,.15)}
+    .modal-actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap}
+    .modal-actions > *{flex:1 1 auto}
+
+    @media (max-width:700px){
+      .wrap{width:min(100% - 18px, 100%); padding-top:14px}
+      .topbar,.hero{padding:18px}
+      .topbar{border-radius:20px; position:static}
+      .hero{border-radius:24px}
+      .form-row{grid-template-columns:1fr}
+      .event-card{grid-template-columns:56px 1fr; grid-template-areas:"date body" "actions actions"}
+      .event-date{grid-area:date; padding:6px}
+      .event-body{grid-area:body}
+      .event-actions{grid-area:actions; justify-content:flex-start; margin-top:8px}
+      .cal-cell{min-height:44px}
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Amely Paris</h1>
+        <p>Administration · Agenda</p>
+      </div>
+      <div class="top-actions">
+        <a class="btn" href="admin.html">Dashboard</a>
+        <a class="btn" href="historique.html">Historique</a>
+        <a class="btn" href="medias.html">Médiathèque</a>
+        <a class="btn" href="avis.html">Avis</a>
+        <a class="btn" href="contenus.html">Contenus</a>
+        <a class="btn" href="publications.html">Réalisations</a>
+        <a class="btn" href="stats.html">Stats</a>
+        <button class="btn" id="logoutBtn" type="button">Déconnexion</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">Back office · agenda</div>
+      <h2>Agenda des prestations</h2>
+      <p>Prestations confirmées, rendez-vous clients, dates de préparation et événements à venir — avec le devis associé quand il existe.</p>
+      <div class="status-line" id="sessionState">Vérification de session en cours…</div>
+    </section>
+
+    <div class="calendar-card">
+      <div class="cal-head">
+        <div class="cal-nav"><button type="button" id="prevMonthBtn">‹</button></div>
+        <h3 id="calTitle">—</h3>
+        <div class="cal-nav">
+          <button type="button" id="todayBtn" title="Aujourd'hui">●</button>
+          <button type="button" id="nextMonthBtn">›</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+
+    <div class="toolbar">
+      <input type="search" id="searchInput" placeholder="Rechercher un événement, un lieu, un responsable…" aria-label="Rechercher">
+      <select id="typeFilter" aria-label="Filtrer par type">
+        <option value="">Tous les types</option>
+        <option value="prestation">Prestation</option>
+        <option value="rdv_client">RDV client</option>
+        <option value="preparation">Préparation</option>
+        <option value="autre">Autre</option>
+      </select>
+      <select id="statusFilterEv" aria-label="Filtrer par statut">
+        <option value="">Tous les statuts</option>
+        <option value="planifie">Planifié</option>
+        <option value="confirme">Confirmé</option>
+        <option value="annule">Annulé</option>
+      </select>
+      <button class="btn btn-sm" id="clearDayBtn" type="button" style="display:none;">Effacer le filtre jour</button>
+      <span class="spacer"></span>
+      <span class="result-count" id="resultCount"></span>
+      <button class="btn btn-primary" id="newEventBtn" type="button">+ Nouvel événement</button>
+    </div>
+
+    <div id="content">
+      <div class="loading-state" id="loadingState">Chargement de l'agenda…</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose" type="button" aria-label="Fermer">✕</button>
+      <h3 id="modalTitle">Nouvel événement</h3>
+      <p class="modal-sub">Les champs marqués * sont obligatoires.</p>
+
+      <form class="form-grid" id="eventForm">
+        <div class="form-field">
+          <label for="fieldTitle">Titre *</label>
+          <input type="text" id="fieldTitle" maxlength="160" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="fieldType">Type</label>
+            <select id="fieldType">
+              <option value="prestation">Prestation</option>
+              <option value="rdv_client">RDV client</option>
+              <option value="preparation">Préparation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="fieldStatusEv">Statut</label>
+            <select id="fieldStatusEv">
+              <option value="planifie">Planifié</option>
+              <option value="confirme">Confirmé</option>
+              <option value="annule">Annulé</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="fieldDate">Date *</label>
+            <input type="date" id="fieldDate" required>
+          </div>
+          <div class="form-field">
+            <label for="fieldEndDate">Date de fin (optionnelle)</label>
+            <input type="date" id="fieldEndDate">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label for="fieldLocation">Lieu</label>
+            <input type="text" id="fieldLocation" maxlength="160">
+          </div>
+          <div class="form-field">
+            <label for="fieldResponsible">Responsable</label>
+            <input type="text" id="fieldResponsible" maxlength="120" placeholder="Ex : Amel, Lorys…">
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="fieldQuote">Devis associé</label>
+          <select id="fieldQuote">
+            <option value="">Aucun devis associé</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="fieldNotes">Informations importantes</label>
+          <textarea id="fieldNotes" maxlength="1000"></textarea>
+        </div>
+
+        <div class="modal-msg" id="modalMsg"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" id="cancelBtn">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var content = document.getElementById('content');
+      var loadingState = document.getElementById('loadingState');
+      var sessionState = document.getElementById('sessionState');
+      var logoutBtn = document.getElementById('logoutBtn');
+      var searchInput = document.getElementById('searchInput');
+      var typeFilter = document.getElementById('typeFilter');
+      var statusFilterEv = document.getElementById('statusFilterEv');
+      var resultCount = document.getElementById('resultCount');
+      var newEventBtn = document.getElementById('newEventBtn');
+      var clearDayBtn = document.getElementById('clearDayBtn');
+
+      var calTitle = document.getElementById('calTitle');
+      var calGrid = document.getElementById('calGrid');
+      var prevMonthBtn = document.getElementById('prevMonthBtn');
+      var nextMonthBtn = document.getElementById('nextMonthBtn');
+      var todayBtn = document.getElementById('todayBtn');
+
+      var modalOverlay = document.getElementById('modalOverlay');
+      var modalTitle = document.getElementById('modalTitle');
+      var modalClose = document.getElementById('modalClose');
+      var cancelBtn = document.getElementById('cancelBtn');
+      var eventForm = document.getElementById('eventForm');
+      var fieldTitle = document.getElementById('fieldTitle');
+      var fieldType = document.getElementById('fieldType');
+      var fieldStatusEv = document.getElementById('fieldStatusEv');
+      var fieldDate = document.getElementById('fieldDate');
+      var fieldEndDate = document.getElementById('fieldEndDate');
+      var fieldLocation = document.getElementById('fieldLocation');
+      var fieldResponsible = document.getElementById('fieldResponsible');
+      var fieldQuote = document.getElementById('fieldQuote');
+      var fieldNotes = document.getElementById('fieldNotes');
+      var modalMsg = document.getElementById('modalMsg');
+      var saveBtn = document.getElementById('saveBtn');
+
+      var currentUserEmail = null;
+      var allEvents = [];
+      var allQuotes = [];
+      var editingId = null;
+      var isSaving = false;
+      var viewYear, viewMonth; // 0-indexed month
+      var selectedDay = null; // 'YYYY-MM-DD'
+
+      var TYPE_LABELS = { prestation: 'Prestation', rdv_client: 'RDV client', preparation: 'Préparation', autre: 'Autre' };
+      var STATUS_LABELS_EV = { planifie: 'Planifié', confirme: 'Confirmé', annule: 'Annulé' };
+      var MONTH_NAMES = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+      var DOW_NAMES = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+      function escapeHtml(v) {
+        return String(v == null ? '' : v)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+      function pad2(n) { return String(n).padStart(2, '0'); }
+      function toISODate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+      async function requireSession() {
+        if (!window.supabase) { sessionState.textContent = "Erreur : le client Supabase n'est pas chargé."; return null; }
+        var res = await window.supabase.auth.getSession();
+        if (res.error || !res.data.session) { window.location.href = 'login.html'; return null; }
+        currentUserEmail = res.data.session.user.email || 'admin';
+        sessionState.textContent = 'Session active : ' + currentUserEmail;
+        return res.data.session;
+      }
+
+      function formatDayMonth(iso) {
+        var d = new Date(iso + 'T00:00:00');
+        return { day: pad2(d.getDate()), month: MONTH_NAMES[d.getMonth()].slice(0, 3) };
+      }
+      function formatDateLong(iso) {
+        var d = new Date(iso + 'T00:00:00');
+        return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+      }
+
+      /* ── Calendrier ── */
+      function renderCalendar() {
+        calTitle.textContent = MONTH_NAMES[viewMonth] + ' ' + viewYear;
+        var firstOfMonth = new Date(viewYear, viewMonth, 1);
+        var startOffset = (firstOfMonth.getDay() + 6) % 7; // lundi = 0
+        var startDate = new Date(viewYear, viewMonth, 1 - startOffset);
+        var todayIso = toISODate(new Date());
+
+        var eventsByDay = {};
+        allEvents.forEach(function (ev) {
+          eventsByDay[ev.event_date] = eventsByDay[ev.event_date] || [];
+          eventsByDay[ev.event_date].push(ev);
+        });
+
+        var html = DOW_NAMES.map(function (d) { return '<div class="cal-dow">' + d + '</div>'; }).join('');
+        for (var i = 0; i < 42; i++) {
+          var d = new Date(startDate);
+          d.setDate(startDate.getDate() + i);
+          var iso = toISODate(d);
+          var isOut = d.getMonth() !== viewMonth;
+          var isToday = iso === todayIso;
+          var isSelected = iso === selectedDay;
+          var dayEvents = eventsByDay[iso] || [];
+          var dots = dayEvents.slice(0, 4).map(function (ev) {
+            return '<span class="cal-dot ' + (ev.status === 'confirme' ? 'confirme' : ev.status === 'annule' ? 'annule' : '') + '"></span>';
+          }).join('');
+          html += '<div class="cal-cell' + (isOut ? ' out' : '') + (isToday ? ' today' : '') + (isSelected ? ' selected' : '') + '" data-date="' + iso + '">' +
+            '<span class="cal-daynum">' + d.getDate() + '</span>' +
+            '<div class="cal-dots">' + dots + '</div>' +
+          '</div>';
+        }
+        calGrid.innerHTML = html;
+      }
+
+      calGrid.addEventListener('click', function (e) {
+        var cell = e.target.closest('.cal-cell');
+        if (!cell) return;
+        var iso = cell.getAttribute('data-date');
+        selectedDay = (selectedDay === iso) ? null : iso;
+        clearDayBtn.style.display = selectedDay ? '' : 'none';
+        renderCalendar();
+        renderFiltered();
+      });
+      clearDayBtn.addEventListener('click', function () {
+        selectedDay = null;
+        clearDayBtn.style.display = 'none';
+        renderCalendar();
+        renderFiltered();
+      });
+      prevMonthBtn.addEventListener('click', function () {
+        viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+        renderCalendar();
+      });
+      nextMonthBtn.addEventListener('click', function () {
+        viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        renderCalendar();
+      });
+      todayBtn.addEventListener('click', function () {
+        var now = new Date();
+        viewYear = now.getFullYear(); viewMonth = now.getMonth();
+        renderCalendar();
+      });
+
+      /* ── Liste des événements ── */
+      function findQuote(id) { return allQuotes.find(function (q) { return String(q.id) === String(id); }); }
+
+      function eventCard(ev) {
+        var dm = formatDayMonth(ev.event_date);
+        var quote = ev.quote_id ? findQuote(ev.quote_id) : null;
+        var quoteLink = quote
+          ? '<div class="event-meta">Devis lié : <a href="id.html?id=' + encodeURIComponent(quote.id) + '" style="text-decoration:underline;">' + escapeHtml(quote.full_name || 'voir') + '</a></div>'
+          : (ev.quote_id ? '<div class="event-meta">Devis lié (introuvable)</div>' : '');
+
+        return (
+          '<div class="event-card" data-id="' + ev.id + '">' +
+            '<div class="event-date"><div class="day">' + dm.day + '</div><div class="month">' + dm.month + '</div></div>' +
+            '<div class="event-body">' +
+              '<strong>' + escapeHtml(ev.title) + '</strong>' +
+              '<div class="event-meta">' +
+                '<span class="badge badge-' + ev.event_type + '">' + escapeHtml(TYPE_LABELS[ev.event_type] || ev.event_type) + '</span>' +
+                '<span class="badge badge-' + ev.status + '">' + escapeHtml(STATUS_LABELS_EV[ev.status] || ev.status) + '</span>' +
+              '</div>' +
+              '<div class="event-meta">' + escapeHtml(formatDateLong(ev.event_date)) + (ev.end_date ? ' → ' + escapeHtml(formatDateLong(ev.end_date)) : '') + '</div>' +
+              (ev.location ? '<div class="event-meta">📍 ' + escapeHtml(ev.location) + '</div>' : '') +
+              (ev.responsible ? '<div class="event-meta">Responsable : ' + escapeHtml(ev.responsible) + '</div>' : '') +
+              quoteLink +
+              (ev.notes ? '<div class="event-meta">' + escapeHtml(ev.notes) + '</div>' : '') +
+            '</div>' +
+            '<div class="event-actions">' +
+              '<button class="btn btn-sm" data-action="edit" data-id="' + ev.id + '">Modifier</button>' +
+              '<button class="btn btn-sm btn-danger" data-action="delete" data-id="' + ev.id + '">Supprimer</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      function matchesFilter(ev, term, type, status) {
+        if (selectedDay && ev.event_date !== selectedDay) return false;
+        if (type && ev.event_type !== type) return false;
+        if (status && ev.status !== status) return false;
+        if (!term) return true;
+        var haystack = [ev.title, ev.location, ev.responsible, ev.notes].filter(Boolean).join(' ').toLowerCase();
+        return haystack.indexOf(term) !== -1;
+      }
+
+      function renderFiltered() {
+        var term = (searchInput.value || '').trim().toLowerCase();
+        var type = typeFilter.value;
+        var status = statusFilterEv.value;
+        var filtered = allEvents.filter(function (ev) { return matchesFilter(ev, term, type, status); });
+        var sorted = filtered.slice().sort(function (a, b) { return a.event_date.localeCompare(b.event_date); });
+
+        if (!sorted.length) {
+          content.innerHTML = '<div class="empty">Aucun événement pour ce filtre.</div>';
+        } else {
+          content.innerHTML = '<div class="event-list">' + sorted.map(eventCard).join('') + '</div>';
+        }
+        resultCount.textContent = sorted.length + ' / ' + allEvents.length + ' événement(s)';
+      }
+
+      searchInput.addEventListener('input', renderFiltered);
+      typeFilter.addEventListener('change', renderFiltered);
+      statusFilterEv.addEventListener('change', renderFiltered);
+
+      async function loadEvents() {
+        content.innerHTML = '';
+        content.appendChild(loadingState);
+
+        var resQuotes = await window.supabase.from('quote_requests').select('id,full_name,event_type,event_date').order('created_at', { ascending: false });
+        allQuotes = resQuotes.data || [];
+        fieldQuote.innerHTML = '<option value="">Aucun devis associé</option>' + allQuotes.map(function (q) {
+          return '<option value="' + q.id + '">' + escapeHtml(q.full_name || 'Client') + ' — ' + escapeHtml(q.event_type || '') + '</option>';
+        }).join('');
+
+        var res = await window.supabase.from('events').select('*').order('event_date');
+        if (res.error) {
+          content.innerHTML = '<div class="empty">Erreur de chargement : ' + escapeHtml(res.error.message) + '</div>';
+          return;
+        }
+        allEvents = res.data || [];
+        renderCalendar();
+        renderFiltered();
+      }
+
+      function findEvent(id) { return allEvents.find(function (r) { return String(r.id) === String(id); }); }
+
+      content.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var action = btn.getAttribute('data-action');
+        var id = btn.getAttribute('data-id');
+        if (action === 'edit') openModal(findEvent(id));
+        else if (action === 'delete') deleteEvent(id);
+      });
+
+      async function deleteEvent(id) {
+        var ev = findEvent(id);
+        if (!ev) return;
+        var ok = window.confirm('Supprimer définitivement « ' + ev.title + ' » ?');
+        if (!ok) return;
+        var res = await window.supabase.from('events').delete().eq('id', id);
+        if (res.error) { alert('Impossible de supprimer : ' + res.error.message); return; }
+        await loadEvents();
+      }
+
+      function resetForm() {
+        editingId = null;
+        fieldTitle.value = '';
+        fieldType.value = 'prestation';
+        fieldStatusEv.value = 'planifie';
+        fieldDate.value = selectedDay || '';
+        fieldEndDate.value = '';
+        fieldLocation.value = '';
+        fieldResponsible.value = '';
+        fieldQuote.value = '';
+        fieldNotes.value = '';
+        modalMsg.className = 'modal-msg';
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Enregistrer';
+      }
+
+      function openModal(ev) {
+        resetForm();
+        if (ev) {
+          editingId = ev.id;
+          modalTitle.textContent = "Modifier l'événement";
+          fieldTitle.value = ev.title || '';
+          fieldType.value = ev.event_type || 'prestation';
+          fieldStatusEv.value = ev.status || 'planifie';
+          fieldDate.value = ev.event_date || '';
+          fieldEndDate.value = ev.end_date || '';
+          fieldLocation.value = ev.location || '';
+          fieldResponsible.value = ev.responsible || '';
+          fieldQuote.value = ev.quote_id || '';
+          fieldNotes.value = ev.notes || '';
+        } else {
+          modalTitle.textContent = 'Nouvel événement';
+        }
+        modalOverlay.classList.add('show');
+      }
+      function closeModal() {
+        if (isSaving) return;
+        modalOverlay.classList.remove('show');
+        resetForm();
+      }
+      modalClose.addEventListener('click', closeModal);
+      cancelBtn.addEventListener('click', closeModal);
+      modalOverlay.addEventListener('click', function (e) { if (e.target === modalOverlay) closeModal(); });
+      newEventBtn.addEventListener('click', function () { openModal(null); });
+
+      eventForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (isSaving) return;
+        var title = fieldTitle.value.trim();
+        var date = fieldDate.value;
+        if (!title || !date) {
+          modalMsg.textContent = 'Merci de renseigner au minimum le titre et la date.';
+          modalMsg.className = 'modal-msg show error';
+          return;
+        }
+        isSaving = true;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Enregistrement…';
+
+        var payload = {
+          title: title,
+          event_type: fieldType.value,
+          status: fieldStatusEv.value,
+          event_date: date,
+          end_date: fieldEndDate.value || null,
+          location: fieldLocation.value.trim() || null,
+          responsible: fieldResponsible.value.trim() || null,
+          quote_id: fieldQuote.value || null,
+          notes: fieldNotes.value.trim() || null,
+          updated_by: currentUserEmail,
+          updated_at: new Date().toISOString()
+        };
+
+        var res = editingId
+          ? await window.supabase.from('events').update(payload).eq('id', editingId)
+          : await window.supabase.from('events').insert(payload);
+
+        if (res.error) {
+          modalMsg.textContent = "Impossible d'enregistrer : " + res.error.message;
+          modalMsg.className = 'modal-msg show error';
+          isSaving = false;
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Enregistrer';
+          return;
+        }
+
+        modalMsg.textContent = 'Événement enregistré.';
+        modalMsg.className = 'modal-msg show success';
+        await loadEvents();
+        isSaving = false;
+        setTimeout(closeModal, 600);
+      });
+
+      logoutBtn.addEventListener('click', async function () {
+        if (!window.supabase) return;
+        await window.supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
+
+      (async function init() {
+        var session = await requireSession();
+        if (!session) return;
+        var now = new Date();
+        viewYear = now.getFullYear(); viewMonth = now.getMonth();
+
+        // Pré-remplissage depuis un devis accepté (voir id.html -> "Créer un événement")
+        var params = new URLSearchParams(window.location.search);
+        var fromQuote = params.get('from_quote');
+
+        await loadEvents();
+
+        if (fromQuote) {
+          var q = findQuote(fromQuote);
+          openModal(null);
+          if (q) {
+            fieldTitle.value = (q.event_type || 'Prestation') + ' — ' + (q.full_name || '');
+            fieldQuote.value = q.id;
+            if (q.event_date) fieldDate.value = q.event_date;
+          }
+        }
+      })();
+    })();
+  </script>
+<script src="../assets/js/admin-notifications.js"></script></body>
+</html>

@@ -69,9 +69,15 @@
       display:inline-flex; align-items:center; justify-content:center; min-width:106px; padding:10px 12px; border-radius:999px;
       font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; border:1px solid transparent;
     }
-    .badge-new{background:rgba(123,63,0,.08); color:var(--new); border-color:rgba(123,63,0,.12)}
-    .badge-progress{background:rgba(163,109,25,.10); color:var(--warn); border-color:rgba(163,109,25,.16)}
-    .badge-closed{background:rgba(47,125,87,.10); color:var(--ok); border-color:rgba(47,125,87,.18)}
+    .badge-nouveau{background:rgba(123,63,0,.08); color:var(--new); border-color:rgba(123,63,0,.12)}
+    .badge-a_contacter{background:rgba(163,109,25,.10); color:var(--warn); border-color:rgba(163,109,25,.16)}
+    .badge-contacte{background:rgba(183,138,87,.12); color:var(--gold-dark); border-color:rgba(183,138,87,.2)}
+    .badge-rdv_prevu{background:rgba(183,138,87,.18); color:var(--gold-dark); border-color:rgba(183,138,87,.24)}
+    .badge-devis_envoye{background:rgba(47,125,87,.08); color:#3f7a5c; border-color:rgba(47,125,87,.14)}
+    .badge-en_attente_reponse{background:rgba(163,109,25,.10); color:var(--warn); border-color:rgba(163,109,25,.16)}
+    .badge-accepte{background:rgba(47,125,87,.10); color:var(--ok); border-color:rgba(47,125,87,.18)}
+    .badge-refuse{background:rgba(138,46,46,.10); color:#8a2e2e; border-color:rgba(138,46,46,.16)}
+    .badge-cloture{background:rgba(126,106,95,.10); color:var(--muted); border-color:rgba(126,106,95,.16)}
     .empty{padding:20px; border:1px dashed rgba(36,25,20,.14); border-radius:18px; color:var(--muted); background:#fffdfa}
     .quick-links{display:grid; gap:12px}
     .quick-link{border:1px solid var(--line); border-radius:18px; padding:16px; background:linear-gradient(180deg, #fffdfb, #fff); transition:.2s ease}
@@ -98,6 +104,12 @@
       </div>
       <div class="top-actions">
         <a class="btn" href="login.html">Connexion</a>
+        <a class="btn" href="medias.html">Gestion des médias</a>
+        <a class="btn" href="avis.html">Avis clients</a>
+        <a class="btn" href="contenus.html">Contenus du site</a>
+        <a class="btn" href="agenda.html">Agenda</a>
+        <a class="btn" href="publications.html">Réalisations &amp; Journal</a>
+        <a class="btn" href="stats.html">Statistiques</a>
         <a class="btn btn-primary" href="devis.html">Voir tous les devis</a>
         <button class="btn" id="logoutBtn" type="button">Déconnexion</button>
       </div>
@@ -123,17 +135,17 @@
       <article class="card kpi">
         <div class="label">Nouveaux</div>
         <div class="value" id="kpiNew">—</div>
-        <div class="foot">Demandes au statut <strong>new</strong></div>
+        <div class="foot">Demandes au statut <strong>Nouveau</strong></div>
       </article>
       <article class="card kpi">
-        <div class="label">En cours</div>
+        <div class="label">Relances dues</div>
         <div class="value" id="kpiProgress">—</div>
-        <div class="foot">Demandes au statut <strong>in_progress</strong></div>
+        <div class="foot">Date de relance dépassée, dossier non clos</div>
       </article>
       <article class="card kpi">
-        <div class="label">Clôturés</div>
+        <div class="label">Terminés</div>
         <div class="value" id="kpiClosed">—</div>
-        <div class="foot">Demandes au statut <strong>closed</strong></div>
+        <div class="foot">Acceptés, refusés ou clôturés</div>
       </article>
 
       <article class="card wide">
@@ -170,6 +182,34 @@
             <strong>id.html?id=...</strong>
             <span>Page détail d’un devis avec lecture par ID et changement de statut via <code>id.js</code>.</span>
           </a>
+          <a class="quick-link" href="medias.html">
+            <strong>medias.html</strong>
+            <span>Médiathèque : remplacer, réordonner et restaurer les photos/vidéos du site sans toucher au code.</span>
+          </a>
+          <a class="quick-link" href="avis.html">
+            <strong>avis.html</strong>
+            <span>Gestion des avis clients : créer, publier, masquer, réordonner et mettre en avant les témoignages de l'accueil.</span>
+          </a>
+          <a class="quick-link" href="contenus.html">
+            <strong>contenus.html</strong>
+            <span>Modifier les textes du site (titres, accroches, présentation) sans toucher au code.</span>
+          </a>
+          <a class="quick-link" href="agenda.html">
+            <strong>agenda.html</strong>
+            <span>Agenda des prestations, RDV et préparations, avec lien vers le devis associé.</span>
+          </a>
+          <a class="quick-link" href="publications.html">
+            <strong>publications.html</strong>
+            <span>Créer des réalisations et articles de journal sans toucher au code, avec galerie et statut brouillon/publié.</span>
+          </a>
+          <a class="quick-link" href="stats.html">
+            <strong>stats.html</strong>
+            <span>Statistiques des devis, contenus publiés et stockage utilisé, calculées depuis Supabase.</span>
+          </a>
+          <a class="quick-link" href="historique.html">
+            <strong>historique.html</strong>
+            <span>Historique complet des créations, modifications et suppressions faites depuis l'admin, avec auteur et détail des champs changés.</span>
+          </a>
           <a class="quick-link" href="index.html">
             <strong>Retour au site</strong>
             <span>Revenir sur le front public sans exposer la partie admin.</span>
@@ -203,20 +243,26 @@
           .replace(/'/g, '&#039;');
       }
 
+      const STATUS_LABELS = {
+        nouveau: 'Nouveau', a_contacter: 'À contacter', contacte: 'Contacté',
+        rdv_prevu: 'Rendez-vous prévu', devis_envoye: 'Devis envoyé',
+        en_attente_reponse: 'En attente de réponse', accepte: 'Accepté',
+        refuse: 'Refusé', cloture: 'Clôturé'
+      };
+
       function badgeClass(status) {
-        switch ((status || '').toLowerCase()) {
-          case 'in_progress': return 'badge badge-progress';
-          case 'closed': return 'badge badge-closed';
-          default: return 'badge badge-new';
-        }
+        return 'badge badge-' + (STATUS_LABELS[status] ? status : 'nouveau');
       }
 
       function labelStatus(status) {
-        switch ((status || '').toLowerCase()) {
-          case 'in_progress': return 'En cours';
-          case 'closed': return 'Clôturé';
-          default: return 'Nouveau';
-        }
+        return STATUS_LABELS[status] || 'Nouveau';
+      }
+
+      function isOverdue(item) {
+        if (!item.follow_up_date) return false;
+        if (['accepte', 'refuse', 'cloture'].indexOf(item.status) !== -1) return false;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        return new Date(item.follow_up_date) < today;
       }
 
       function formatDate(date) {
@@ -269,9 +315,9 @@
 
         const rows = Array.isArray(data) ? data : [];
         const total = rows.length;
-        const newCount = rows.filter(item => (item.status || 'new') === 'new').length;
-        const progressCount = rows.filter(item => item.status === 'in_progress').length;
-        const closedCount = rows.filter(item => item.status === 'closed').length;
+        const newCount = rows.filter(item => (item.status || 'nouveau') === 'nouveau').length;
+        const progressCount = rows.filter(isOverdue).length;
+        const closedCount = rows.filter(item => ['accepte', 'refuse', 'cloture'].indexOf(item.status) !== -1).length;
 
         kpiTotal.textContent = total;
         kpiNew.textContent = newCount;
@@ -313,5 +359,5 @@
       loadDashboard();
     })();
   </script>
-</body>
+<script src="../assets/js/admin-notifications.js"></script></body>
 </html>

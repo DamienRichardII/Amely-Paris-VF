@@ -55,10 +55,49 @@
   const nav = document.querySelector('.primary-nav');
   const toggle = document.querySelector('.nav-toggle');
   if (toggle && nav) {
+    const openMobileNav = () => {
+      nav.classList.add('is-open');
+      header?.classList.add('nav-open');
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.setAttribute('aria-label', 'Fermer le menu');
+      document.body.style.overflow = 'hidden';
+    };
+    const closeMobileNav = (opts) => {
+      const returnFocus = opts && opts.returnFocus;
+      nav.classList.remove('is-open');
+      header?.classList.remove('nav-open');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Menu');
+      document.body.style.overflow = '';
+      if (returnFocus) toggle.focus();
+    };
+
     toggle.addEventListener('click', () => {
-      const open = nav.classList.toggle('is-open');
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      document.body.style.overflow = open ? 'hidden' : '';
+      if (nav.classList.contains('is-open')) closeMobileNav();
+      else openMobileNav();
+    });
+
+    /* Échap referme le menu et rend le focus au bouton */
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+        closeMobileNav({ returnFocus: true });
+      }
+    });
+
+    /* Fermeture après clic sur un vrai lien (hors déclencheurs de sous-menu) */
+    nav.querySelectorAll(':scope > a, .dropdown a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.matchMedia('(max-width: 1024px)').matches) closeMobileNav();
+      });
+    });
+
+    /* ── Close mobile nav on outside click ── */
+    document.addEventListener('click', e => {
+      if (!window.matchMedia('(max-width: 1024px)').matches) return;
+      if (!nav.classList.contains('is-open')) return;
+      if (!nav.contains(e.target) && !toggle.contains(e.target)) {
+        closeMobileNav();
+      }
     });
   }
 
@@ -73,17 +112,6 @@
         item.classList.toggle('is-open');
       }
     });
-  });
-
-  /* ── Close mobile nav on outside click ── */
-  document.addEventListener('click', e => {
-    if (!nav || !toggle) return;
-    if (!window.matchMedia('(max-width: 1024px)').matches) return;
-    if (!nav.contains(e.target) && !toggle.contains(e.target)) {
-      nav.classList.remove('is-open');
-      toggle.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
-    }
   });
 
   /* ── Tabs ── */

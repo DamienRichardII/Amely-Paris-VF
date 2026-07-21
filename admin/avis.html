@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="fr">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config/supabase.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion des avis — Amely Paris</title>
+  <meta name="robots" content="noindex,nofollow"><link rel="icon" href="../favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <style>
+    :root{
+      --bg:#f7f1ea; --paper:#fffaf5; --card:#ffffff; --ink:#241914; --muted:#7e6a5f;
+      --line:rgba(36,25,20,.10); --gold:#b78a57; --gold-dark:#8b6235;
+      --ok:#2f7d57; --warn:#a36d19; --new:#7b3f00; --danger:#8a2e2e;
+      --shadow:0 18px 45px rgba(36,25,20,.08); --radius:22px;
+    }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(183,138,87,.10), transparent 28%),
+        linear-gradient(180deg, #fbf7f2 0%, #f6efe7 100%);
+      min-height:100vh;
+    }
+    a{color:inherit;text-decoration:none} button{font:inherit}
+    .wrap{width:min(1180px, calc(100% - 32px)); margin:0 auto; padding:24px 0 60px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:22px;
+      padding:18px 22px; background:rgba(255,255,255,.70); border:1px solid rgba(255,255,255,.65);
+      backdrop-filter: blur(14px); border-radius:26px; box-shadow:var(--shadow); position:sticky; top:14px; z-index:20;
+    }
+    .brand h1{margin:0; font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(28px,4vw,40px); font-weight:500; letter-spacing:.02em; line-height:1}
+    .brand p{margin:6px 0 0; color:var(--muted); font-size:13px}
+    .top-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--line); background:#fff; color:var(--ink); padding:12px 16px; border-radius:999px;
+      transition:.22s ease; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:46px;
+    }
+    .btn:hover{transform:translateY(-1px); border-color:rgba(183,138,87,.45); box-shadow:0 10px 24px rgba(183,138,87,.12)}
+    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none; box-shadow:none}
+    .btn-primary{background:linear-gradient(180deg, #c89a63 0%, #a97945 100%); color:#fff; border-color:transparent}
+    .btn-primary:hover{background:linear-gradient(180deg, #cf9f68 0%, #93663a 100%); box-shadow:0 14px 28px rgba(169,121,69,.22)}
+    .btn-sm{min-height:38px; padding:0 14px; font-size:13px}
+    .btn-danger{color:var(--danger); border-color:rgba(153,0,0,.18)}
+    .hero{
+      background:linear-gradient(135deg, rgba(255,255,255,.84), rgba(255,248,241,.76));
+      border:1px solid rgba(255,255,255,.65); border-radius:32px; padding:32px; box-shadow:var(--shadow); margin-bottom:22px;
+    }
+    .eyebrow{display:inline-flex; align-items:center; gap:8px; color:var(--gold-dark); font-size:12px; letter-spacing:.18em; text-transform:uppercase; margin-bottom:14px}
+    .hero h2{margin:0 0 10px; font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(34px,5vw,52px); font-weight:500; line-height:.98; letter-spacing:.01em}
+    .hero p{margin:0; max-width:820px; color:var(--muted); font-size:15px; line-height:1.65}
+    .status-line{margin-top:14px; padding:12px 14px; border-radius:16px; font-size:13px; background:#fff7ee; border:1px solid rgba(183,138,87,.15); color:#7d5b36}
+
+    .toolbar{
+      display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px;
+      background:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.65); border-radius:20px; padding:14px 16px;
+      box-shadow:var(--shadow);
+    }
+    .toolbar input[type="search"], .toolbar select{
+      border:1px solid var(--line); background:#fff; border-radius:14px; padding:0 14px; min-height:44px;
+      font:inherit; color:var(--ink);
+    }
+    .toolbar input[type="search"]{flex:1 1 220px; min-width:180px}
+    .toolbar select{flex:0 0 auto}
+    .toolbar .result-count{font-size:12px; color:var(--muted); white-space:nowrap}
+    .toolbar .spacer{flex:1}
+
+    .review-list{display:grid; gap:14px}
+    .review-card{
+      display:grid; grid-template-columns:88px 1fr auto; gap:16px; align-items:start;
+      background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:0 8px 20px rgba(36,25,20,.04);
+    }
+    .review-photo{
+      width:88px; height:88px; border-radius:14px; overflow:hidden; background:#f1ece3;
+      display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--muted); flex-shrink:0;
+    }
+    .review-photo img{width:100%; height:100%; object-fit:cover; display:block}
+    .review-body strong{display:block; font-size:15px; margin-bottom:4px}
+    .review-stars{color:var(--gold); font-size:14px; letter-spacing:2px; margin-bottom:6px}
+    .review-stars .off{color:var(--line)}
+    .review-text{font-size:13px; color:var(--muted); line-height:1.5; margin:0 0 8px; max-width:640px}
+    .review-badges{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .badge{
+      display:inline-flex; align-items:center; gap:4px; font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+      padding:4px 9px; border-radius:999px; border:1px solid transparent;
+    }
+    .badge-draft{color:var(--warn); background:rgba(163,109,25,.10); border-color:rgba(163,109,25,.2)}
+    .badge-published{color:var(--ok); background:rgba(47,125,87,.10); border-color:rgba(47,125,87,.2)}
+    .badge-hidden{color:var(--muted); background:rgba(126,106,95,.10); border-color:rgba(126,106,95,.2)}
+    .badge-featured{color:var(--gold-dark); background:rgba(183,138,87,.12); border-color:rgba(183,138,87,.22)}
+    .badge-type{color:var(--ink); background:#f1ece3}
+    .slot-meta{display:block; margin-top:8px; font-size:11px; color:var(--muted)}
+    .review-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start; max-width:220px}
+    .order-btns{display:flex; flex-direction:column; gap:4px}
+    .order-btns button{
+      width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:#fff; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; font-size:12px; padding:0;
+    }
+    .order-btns button:disabled{opacity:.3; cursor:not-allowed}
+    .empty, .loading-state{padding:40px 20px; text-align:center; border:1px dashed rgba(36,25,20,.14); border-radius:18px; color:var(--muted); background:#fffdfa}
+
+    .modal-overlay{
+      position:fixed; inset:0; background:rgba(20,14,10,.55); backdrop-filter:blur(4px);
+      display:none; align-items:center; justify-content:center; z-index:200; padding:20px;
+    }
+    .modal-overlay.show{display:flex}
+    .modal{
+      width:min(600px, 100%); max-height:92vh; overflow-y:auto; background:#fff; border-radius:24px; padding:26px;
+      box-shadow:0 30px 70px rgba(0,0,0,.3);
+    }
+    .modal h3{margin:0 0 4px; font-family:"Cormorant Garamond", Georgia, serif; font-size:26px; font-weight:500}
+    .modal .modal-sub{margin:0 0 18px; color:var(--muted); font-size:13px}
+    .modal-close{float:right; background:none; border:none; cursor:pointer; font-size:20px; color:var(--muted); line-height:1}
+    .form-grid{display:grid; gap:14px}
+    .form-field{display:grid; gap:6px}
+    .form-field label{font-size:12px; font-weight:600; color:var(--ink)}
+    .form-field input[type="text"], .form-field textarea, .form-field select{
+      border:1px solid var(--line); border-radius:14px; padding:10px 14px; font:inherit; color:var(--ink); background:#fffdfa;
+      width:100%;
+    }
+    .form-field textarea{min-height:90px; resize:vertical}
+    .star-picker{display:flex; gap:6px}
+    .star-picker button{
+      width:36px; height:36px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer;
+      font-size:16px; color:var(--line); display:flex; align-items:center; justify-content:center;
+    }
+    .star-picker button.active{color:var(--gold); border-color:rgba(183,138,87,.4); background:#fff7ee}
+    .checkbox-row{display:flex; align-items:center; gap:8px; font-size:13px}
+    .photo-row{display:flex; align-items:center; gap:12px}
+    .photo-preview{
+      width:72px; height:72px; border-radius:12px; overflow:hidden; background:#f1ece3; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--muted); text-align:center;
+    }
+    .photo-preview img{width:100%; height:100%; object-fit:cover}
+    .modal-msg{margin-top:6px; padding:12px 14px; border-radius:14px; font-size:13px; display:none}
+    .modal-msg.show{display:block}
+    .modal-msg.error{background:#fff0f0; color:var(--danger); border:1px solid rgba(153,0,0,.14)}
+    .modal-msg.success{background:#eef9f2; color:#256746; border:1px solid rgba(37,103,70,.15)}
+    .modal-msg.info{background:#fff7ee; color:#7d5b36; border:1px solid rgba(183,138,87,.18)}
+    .modal-actions{display:flex; gap:10px; margin-top:20px; flex-wrap:wrap}
+    .modal-actions > *{flex:1 1 auto}
+
+    @media (max-width:700px){
+      .wrap{width:min(100% - 18px, 100%); padding-top:14px}
+      .topbar,.hero{padding:18px}
+      .topbar{border-radius:20px; position:static}
+      .hero{border-radius:24px}
+      .review-card{grid-template-columns:64px 1fr; grid-template-areas:"photo body" "actions actions"}
+      .review-photo{grid-area:photo; width:64px; height:64px}
+      .review-body{grid-area:body}
+      .review-actions{grid-area:actions; justify-content:flex-start; max-width:none; margin-top:8px}
+    }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Amely Paris</h1>
+        <p>Administration · Avis clients</p>
+      </div>
+      <div class="top-actions">
+        <a class="btn" href="admin.html">Dashboard</a>
+        <a class="btn" href="historique.html">Historique</a>
+        <a class="btn" href="medias.html">Médiathèque</a>
+        <a class="btn" href="contenus.html">Contenus</a>
+        <a class="btn" href="agenda.html">Agenda</a>
+        <a class="btn" href="publications.html">Réalisations</a>
+        <a class="btn" href="stats.html">Stats</a>
+        <button class="btn" id="logoutBtn" type="button">Déconnexion</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">Back office · avis &amp; témoignages</div>
+      <h2>Gestion des avis</h2>
+      <p>
+        Ajoutez, modifiez et organisez les témoignages affichés dans la section « Ils nous ont fait confiance » de la page d'accueil.
+        Seuls les avis au statut <strong>Publié</strong> apparaissent sur le site.
+      </p>
+      <div class="status-line" id="sessionState">Vérification de session en cours…</div>
+    </section>
+
+    <div class="toolbar">
+      <input type="search" id="searchInput" placeholder="Rechercher un avis (nom, texte, prestation…)" aria-label="Rechercher un avis">
+      <select id="statusFilter" aria-label="Filtrer par statut">
+        <option value="">Tous les statuts</option>
+        <option value="draft">Brouillon</option>
+        <option value="published">Publié</option>
+        <option value="hidden">Masqué</option>
+      </select>
+      <span class="result-count" id="resultCount"></span>
+      <span class="spacer"></span>
+      <button class="btn btn-primary" id="newReviewBtn" type="button">+ Nouvel avis</button>
+    </div>
+
+    <div id="content">
+      <div class="loading-state" id="loadingState">Chargement des avis…</div>
+    </div>
+  </div>
+
+  <!-- Modal création / édition -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose" type="button" aria-label="Fermer">✕</button>
+      <h3 id="modalTitle">Nouvel avis</h3>
+      <p class="modal-sub">Les champs marqués * sont obligatoires.</p>
+
+      <form class="form-grid" id="reviewForm">
+        <div class="form-field">
+          <label for="fieldName">Nom du client *</label>
+          <input type="text" id="fieldName" maxlength="120" required>
+        </div>
+
+        <div class="form-field">
+          <label>Note *</label>
+          <div class="star-picker" id="starPicker">
+            <button type="button" data-star="1">★</button>
+            <button type="button" data-star="2">★</button>
+            <button type="button" data-star="3">★</button>
+            <button type="button" data-star="4">★</button>
+            <button type="button" data-star="5">★</button>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="fieldType">Type de prestation</label>
+          <input type="text" id="fieldType" list="serviceTypes" maxlength="80" placeholder="Ex : Brunch de mariage">
+          <datalist id="serviceTypes">
+            <option value="Brunch de mariage">
+            <option value="Buffet événementiel">
+            <option value="Animation culinaire">
+            <option value="Événement corporate">
+            <option value="Traiteur & Formats">
+            <option value="Scénographie">
+          </datalist>
+        </div>
+
+        <div class="form-field">
+          <label for="fieldText">Témoignage *</label>
+          <textarea id="fieldText" maxlength="600" required></textarea>
+        </div>
+
+        <div class="form-field">
+          <label for="fieldStatus">Statut</label>
+          <select id="fieldStatus">
+            <option value="draft">Brouillon (invisible sur le site)</option>
+            <option value="published">Publié (visible sur le site)</option>
+            <option value="hidden">Masqué</option>
+          </select>
+        </div>
+
+        <div class="form-field checkbox-row">
+          <input type="checkbox" id="fieldFeatured">
+          <label for="fieldFeatured" style="font-weight:400;">Mettre en avant sur la page d'accueil</label>
+        </div>
+
+        <div class="form-field">
+          <label>Photo (optionnelle)</label>
+          <div class="photo-row">
+            <div class="photo-preview" id="photoPreview">Aucune photo</div>
+            <input type="file" id="photoInput" accept="image/*">
+            <button type="button" class="btn btn-sm" id="removePhotoBtn" style="display:none;">Retirer</button>
+          </div>
+        </div>
+
+        <div class="modal-msg" id="modalMsg"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn" id="cancelBtn">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="saveBtn">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var BUCKET = 'site-media';
+      var content = document.getElementById('content');
+      var loadingState = document.getElementById('loadingState');
+      var sessionState = document.getElementById('sessionState');
+      var logoutBtn = document.getElementById('logoutBtn');
+      var searchInput = document.getElementById('searchInput');
+      var statusFilter = document.getElementById('statusFilter');
+      var resultCount = document.getElementById('resultCount');
+      var newReviewBtn = document.getElementById('newReviewBtn');
+
+      var modalOverlay = document.getElementById('modalOverlay');
+      var modalTitle = document.getElementById('modalTitle');
+      var modalClose = document.getElementById('modalClose');
+      var cancelBtn = document.getElementById('cancelBtn');
+      var reviewForm = document.getElementById('reviewForm');
+      var fieldName = document.getElementById('fieldName');
+      var starPicker = document.getElementById('starPicker');
+      var fieldType = document.getElementById('fieldType');
+      var fieldText = document.getElementById('fieldText');
+      var fieldStatus = document.getElementById('fieldStatus');
+      var fieldFeatured = document.getElementById('fieldFeatured');
+      var photoInput = document.getElementById('photoInput');
+      var photoPreview = document.getElementById('photoPreview');
+      var removePhotoBtn = document.getElementById('removePhotoBtn');
+      var modalMsg = document.getElementById('modalMsg');
+      var saveBtn = document.getElementById('saveBtn');
+
+      var currentUserEmail = null;
+      var allReviews = [];
+      var editingId = null;
+      var currentRating = 5;
+      var photoFile = null;
+      var photoRemoved = false;
+      var existingPhotoUrl = null;
+      var existingStoragePath = null;
+      var isSaving = false;
+
+      function escapeHtml(v) {
+        return String(v == null ? '' : v)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function setModalMsg(text, type) {
+        modalMsg.textContent = text || '';
+        modalMsg.className = text ? 'modal-msg show ' + type : 'modal-msg';
+      }
+
+      async function requireSession() {
+        if (!window.supabase) {
+          sessionState.textContent = "Erreur : le client Supabase n'est pas chargé.";
+          return null;
+        }
+        var res = await window.supabase.auth.getSession();
+        if (res.error || !res.data.session) {
+          window.location.href = 'login.html';
+          return null;
+        }
+        currentUserEmail = res.data.session.user.email || 'admin';
+        sessionState.textContent = 'Session active : ' + currentUserEmail;
+        return res.data.session;
+      }
+
+      function formatDate(iso) {
+        if (!iso) return '';
+        try {
+          var d = new Date(iso);
+          return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+            ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        } catch (e) { return iso; }
+      }
+
+      function starsHtml(rating) {
+        var out = '';
+        for (var i = 1; i <= 5; i++) out += '<span class="' + (i <= rating ? '' : 'off') + '">★</span>';
+        return out;
+      }
+
+      function statusBadge(status) {
+        var map = { draft: ['Brouillon', 'badge-draft'], published: ['Publié', 'badge-published'], hidden: ['Masqué', 'badge-hidden'] };
+        var m = map[status] || [status, ''];
+        return '<span class="badge ' + m[1] + '">' + m[0] + '</span>';
+      }
+
+      function renderCard(row, isFirst, isLast) {
+        var photoHtml = row.photo_url
+          ? '<img src="' + escapeHtml(row.photo_url) + '" alt="">'
+          : '👤';
+        var statusActionLabel = row.status === 'published' ? 'Masquer' : 'Publier';
+        var statusActionTarget = row.status === 'published' ? 'hidden' : 'published';
+        var metaLine = row.updated_by
+          ? '<span class="slot-meta">Modifié par ' + escapeHtml(row.updated_by) + (row.updated_at ? ' le ' + formatDate(row.updated_at) : '') + '</span>'
+          : '';
+
+        return (
+          '<div class="review-card" data-id="' + row.id + '">' +
+            '<div class="review-photo">' + photoHtml + '</div>' +
+            '<div class="review-body">' +
+              '<strong>' + escapeHtml(row.author_name) + '</strong>' +
+              '<div class="review-stars">' + starsHtml(row.rating) + '</div>' +
+              '<p class="review-text">' + escapeHtml(row.testimonial) + '</p>' +
+              '<div class="review-badges">' +
+                statusBadge(row.status) +
+                (row.featured ? '<span class="badge badge-featured">Mise en avant</span>' : '') +
+                (row.service_type ? '<span class="badge badge-type">' + escapeHtml(row.service_type) + '</span>' : '') +
+              '</div>' +
+              metaLine +
+            '</div>' +
+            '<div class="review-actions">' +
+              '<div class="order-btns">' +
+                '<button type="button" data-action="move-up" data-id="' + row.id + '" title="Monter"' + (isFirst ? ' disabled' : '') + '>▲</button>' +
+                '<button type="button" data-action="move-down" data-id="' + row.id + '" title="Descendre"' + (isLast ? ' disabled' : '') + '>▼</button>' +
+              '</div>' +
+              '<button class="btn btn-sm" data-action="toggle-status" data-target="' + statusActionTarget + '" data-id="' + row.id + '">' + statusActionLabel + '</button>' +
+              '<button class="btn btn-sm" data-action="edit" data-id="' + row.id + '">Modifier</button>' +
+              '<button class="btn btn-sm btn-danger" data-action="delete" data-id="' + row.id + '">Supprimer</button>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      function matchesFilter(row, term, status) {
+        if (status && row.status !== status) return false;
+        if (!term) return true;
+        var haystack = [row.author_name, row.testimonial, row.service_type].filter(Boolean).join(' ').toLowerCase();
+        return haystack.indexOf(term) !== -1;
+      }
+
+      function renderFiltered() {
+        var term = (searchInput.value || '').trim().toLowerCase();
+        var status = statusFilter.value || '';
+        var filtered = allReviews.filter(function (r) { return matchesFilter(r, term, status); });
+        if (!filtered.length) {
+          content.innerHTML = '<div class="empty">Aucun avis pour ce filtre.</div>';
+        } else {
+          var sorted = allReviews.slice().sort(function (a, b) { return a.display_order - b.display_order; });
+          content.innerHTML = '<div class="review-list">' + filtered
+            .slice()
+            .sort(function (a, b) { return a.display_order - b.display_order; })
+            .map(function (row) {
+              var pos = sorted.findIndex(function (s) { return String(s.id) === String(row.id); });
+              return renderCard(row, pos <= 0, pos === sorted.length - 1);
+            })
+            .join('') + '</div>';
+        }
+        resultCount.textContent = filtered.length + ' / ' + allReviews.length + ' avis';
+      }
+
+      async function loadReviews() {
+        content.innerHTML = '';
+        content.appendChild(loadingState);
+        var res = await window.supabase.from('reviews').select('*').order('display_order');
+        if (res.error) {
+          content.innerHTML = '<div class="empty">Erreur de chargement : ' + escapeHtml(res.error.message) + '</div>';
+          return;
+        }
+        allReviews = res.data || [];
+        renderFiltered();
+      }
+
+      function findReview(id) {
+        return allReviews.find(function (r) { return String(r.id) === String(id); });
+      }
+
+      searchInput.addEventListener('input', renderFiltered);
+      statusFilter.addEventListener('change', renderFiltered);
+
+      /* ── Réordonnancement ── */
+      async function moveReview(id, direction) {
+        var sorted = allReviews.slice().sort(function (a, b) { return a.display_order - b.display_order; });
+        var idx = sorted.findIndex(function (s) { return String(s.id) === String(id); });
+        var swapWith = direction === 'up' ? sorted[idx - 1] : sorted[idx + 1];
+        if (!swapWith) return;
+        var current = sorted[idx];
+        var a = await window.supabase.from('reviews').update({ display_order: swapWith.display_order }).eq('id', current.id);
+        var b = await window.supabase.from('reviews').update({ display_order: current.display_order }).eq('id', swapWith.id);
+        if (a.error || b.error) { alert('Impossible de réordonner ces avis.'); return; }
+        await loadReviews();
+      }
+
+      /* ── Bascule statut rapide ── */
+      async function toggleStatus(id, target) {
+        var res = await window.supabase.from('reviews').update({
+          status: target, updated_by: currentUserEmail, updated_at: new Date().toISOString()
+        }).eq('id', id);
+        if (res.error) { alert('Impossible de changer le statut : ' + res.error.message); return; }
+        await loadReviews();
+      }
+
+      /* ── Suppression ── */
+      async function deleteReview(id) {
+        var row = findReview(id);
+        if (!row) return;
+        var ok = window.confirm('Supprimer définitivement l\'avis de « ' + row.author_name + ' » ? Cette action est irréversible.');
+        if (!ok) return;
+        if (row.storage_path) {
+          try { await window.supabase.storage.from(BUCKET).remove([row.storage_path]); } catch (e) {}
+        }
+        var res = await window.supabase.from('reviews').delete().eq('id', id);
+        if (res.error) { alert('Impossible de supprimer cet avis : ' + res.error.message); return; }
+        await loadReviews();
+      }
+
+      content.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var action = btn.getAttribute('data-action');
+        var id = btn.getAttribute('data-id');
+        if (action === 'edit') openModal(findReview(id));
+        else if (action === 'delete') deleteReview(id);
+        else if (action === 'move-up') moveReview(id, 'up');
+        else if (action === 'move-down') moveReview(id, 'down');
+        else if (action === 'toggle-status') toggleStatus(id, btn.getAttribute('data-target'));
+      });
+
+      /* ── Modal création / édition ── */
+      function setStars(n) {
+        currentRating = n;
+        starPicker.querySelectorAll('button').forEach(function (b) {
+          b.classList.toggle('active', Number(b.getAttribute('data-star')) <= n);
+        });
+      }
+      starPicker.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-star]');
+        if (b) setStars(Number(b.getAttribute('data-star')));
+      });
+
+      function resetForm() {
+        editingId = null;
+        fieldName.value = '';
+        fieldType.value = '';
+        fieldText.value = '';
+        fieldStatus.value = 'draft';
+        fieldFeatured.checked = false;
+        setStars(5);
+        photoFile = null;
+        photoRemoved = false;
+        existingPhotoUrl = null;
+        existingStoragePath = null;
+        photoInput.value = '';
+        photoPreview.innerHTML = 'Aucune photo';
+        removePhotoBtn.style.display = 'none';
+        setModalMsg('', '');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Enregistrer';
+      }
+
+      function openModal(row) {
+        resetForm();
+        if (row) {
+          editingId = row.id;
+          modalTitle.textContent = 'Modifier l\'avis';
+          fieldName.value = row.author_name || '';
+          fieldType.value = row.service_type || '';
+          fieldText.value = row.testimonial || '';
+          fieldStatus.value = row.status || 'draft';
+          fieldFeatured.checked = !!row.featured;
+          setStars(row.rating || 5);
+          if (row.photo_url) {
+            existingPhotoUrl = row.photo_url;
+            existingStoragePath = row.storage_path;
+            photoPreview.innerHTML = '<img src="' + escapeHtml(row.photo_url) + '" alt="">';
+            removePhotoBtn.style.display = '';
+          }
+        } else {
+          modalTitle.textContent = 'Nouvel avis';
+        }
+        modalOverlay.classList.add('show');
+      }
+
+      function closeModal() {
+        if (isSaving) return;
+        modalOverlay.classList.remove('show');
+        resetForm();
+      }
+
+      modalClose.addEventListener('click', closeModal);
+      cancelBtn.addEventListener('click', closeModal);
+      modalOverlay.addEventListener('click', function (e) { if (e.target === modalOverlay) closeModal(); });
+      newReviewBtn.addEventListener('click', function () { openModal(null); });
+
+      photoInput.addEventListener('change', function () {
+        var file = photoInput.files && photoInput.files[0];
+        if (!file) return;
+        if (file.type.indexOf('image/') !== 0) {
+          setModalMsg('Merci de choisir un fichier image.', 'error');
+          photoInput.value = '';
+          return;
+        }
+        photoFile = file;
+        photoRemoved = false;
+        var url = URL.createObjectURL(file);
+        photoPreview.innerHTML = '<img src="' + url + '" alt="">';
+        removePhotoBtn.style.display = '';
+        setModalMsg('', '');
+      });
+
+      removePhotoBtn.addEventListener('click', function () {
+        photoFile = null;
+        photoRemoved = true;
+        photoInput.value = '';
+        photoPreview.innerHTML = 'Aucune photo';
+        removePhotoBtn.style.display = 'none';
+      });
+
+      function compressImage(file) {
+        var MAX_DIM = 1200;
+        var SKIP_THRESHOLD = 1.5 * 1024 * 1024;
+        return new Promise(function (resolve) {
+          var objectUrl = URL.createObjectURL(file);
+          var img = new Image();
+          img.onload = function () {
+            var w = img.naturalWidth, h = img.naturalHeight;
+            var scale = Math.min(1, MAX_DIM / Math.max(w, h));
+            if (scale >= 1 && file.size <= SKIP_THRESHOLD) { URL.revokeObjectURL(objectUrl); resolve(file); return; }
+            var canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(w * scale));
+            canvas.height = Math.max(1, Math.round(h * scale));
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            var outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+            canvas.toBlob(function (blob) {
+              URL.revokeObjectURL(objectUrl);
+              if (!blob || blob.size >= file.size) { resolve(file); return; }
+              var ext = outType === 'image/png' ? 'png' : 'jpg';
+              var baseName = file.name.replace(/\.[^.]+$/, '');
+              resolve(new File([blob], baseName + '-optimise.' + ext, { type: outType }));
+            }, outType, outType === 'image/jpeg' ? 0.85 : undefined);
+          };
+          img.onerror = function () { URL.revokeObjectURL(objectUrl); resolve(file); };
+          img.src = objectUrl;
+        });
+      }
+
+      function slugify(name) {
+        return name.toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      }
+
+      reviewForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (isSaving) return;
+
+        var name = fieldName.value.trim();
+        var text = fieldText.value.trim();
+        if (!name || !text || !currentRating) {
+          setModalMsg('Merci de renseigner le nom, la note et le témoignage.', 'error');
+          return;
+        }
+
+        isSaving = true;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Enregistrement…';
+        setModalMsg('', '');
+
+        try {
+          var photoUrl = existingPhotoUrl;
+          var storagePath = existingStoragePath;
+
+          if (photoRemoved) {
+            if (existingStoragePath) {
+              try { await window.supabase.storage.from(BUCKET).remove([existingStoragePath]); } catch (e) {}
+            }
+            photoUrl = null;
+            storagePath = null;
+          }
+
+          if (photoFile) {
+            setModalMsg('Envoi de la photo…', 'info');
+            var optimized = await compressImage(photoFile);
+            var ext = (optimized.name.split('.').pop() || 'jpg').toLowerCase();
+            var path = 'reviews/' + slugify(name) + '-' + Date.now() + '.' + ext;
+            var upload = await window.supabase.storage.from(BUCKET).upload(path, optimized, {
+              cacheControl: '3600', upsert: false, contentType: optimized.type
+            });
+            if (upload.error) throw upload.error;
+            var pub = window.supabase.storage.from(BUCKET).getPublicUrl(path);
+            if (!pub.data || !pub.data.publicUrl) throw new Error('URL publique introuvable.');
+            photoUrl = pub.data.publicUrl;
+            storagePath = path;
+          }
+
+          var payload = {
+            author_name: name,
+            rating: currentRating,
+            testimonial: text,
+            service_type: fieldType.value.trim() || null,
+            status: fieldStatus.value,
+            featured: fieldFeatured.checked,
+            photo_url: photoUrl,
+            storage_path: storagePath,
+            updated_by: currentUserEmail,
+            updated_at: new Date().toISOString()
+          };
+
+          var res;
+          if (editingId) {
+            res = await window.supabase.from('reviews').update(payload).eq('id', editingId);
+          } else {
+            payload.display_order = allReviews.length ? Math.max.apply(null, allReviews.map(function (r) { return r.display_order; })) + 1 : 1;
+            res = await window.supabase.from('reviews').insert(payload);
+          }
+          if (res.error) throw res.error;
+
+          setModalMsg('Avis enregistré avec succès.', 'success');
+          await loadReviews();
+          setTimeout(closeModal, 700);
+        } catch (err) {
+          console.error(err);
+          setModalMsg("Impossible d'enregistrer cet avis. Veuillez réessayer.", 'error');
+        } finally {
+          isSaving = false;
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Enregistrer';
+        }
+      });
+
+      logoutBtn.addEventListener('click', async function () {
+        if (!window.supabase) return;
+        await window.supabase.auth.signOut();
+        window.location.href = 'login.html';
+      });
+
+      (async function init() {
+        var session = await requireSession();
+        if (!session) return;
+        await loadReviews();
+      })();
+    })();
+  </script>
+<script src="../assets/js/admin-notifications.js"></script></body>
+</html>

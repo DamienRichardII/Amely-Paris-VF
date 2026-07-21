@@ -10,7 +10,7 @@
   <style>
     :root{
       --ink:#241914; --muted:#7e6a5f; --line:rgba(36,25,20,.10); --shadow:0 18px 45px rgba(36,25,20,.08);
-      --gold:#b78a57; --gold-dark:#8b6235;
+      --gold:#b78a57; --gold-dark:#8b6235; --danger:#8a2e2e; --ok:#2f7d57;
     }
     *{box-sizing:border-box} html,body{margin:0;padding:0}
     body{
@@ -29,14 +29,17 @@
     h1{margin:0; font-family:"Cormorant Garamond",Georgia,serif; font-size:44px; font-weight:500; line-height:.95}
     .muted{color:var(--muted)}
     .actions{display:flex; gap:10px; flex-wrap:wrap}
-    .btn, select{
+    .btn, select, input, textarea{
       min-height:46px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit;
     }
+    textarea{border-radius:16px; min-height:80px; padding:12px 14px; resize:vertical}
     .btn{
       padding:0 16px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;
     }
+    .btn-sm{min-height:38px; padding:0 12px; font-size:13px}
     .btn-primary{background:linear-gradient(180deg,#c89a63 0%,#a97945 100%); color:#fff; border-color:transparent}
-    select{padding:0 16px}
+    .btn-danger{color:var(--danger); border-color:rgba(153,0,0,.18)}
+    select,input{padding:0 16px}
     .grid{display:grid; grid-template-columns:1fr 1fr; gap:18px}
     .card{padding:20px}
     .card h2{margin:0 0 14px; font-size:18px}
@@ -48,20 +51,28 @@
     .message-box{
       min-height:220px; padding:18px; border-radius:18px; background:#fffdfb; border:1px solid var(--line); white-space:pre-wrap; line-height:1.7;
     }
-    .statusbar{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:14px}
+    .statusbar{display:grid; gap:12px; margin-top:14px}
+    .statusbar-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .statusbar-row label{font-size:12px; color:var(--muted); min-width:110px}
     .notice{
       margin-top:14px; padding:12px 14px; border-radius:14px; display:none; font-size:14px;
     }
     .notice.show{display:block}
-    .notice.error{background:#fff0f0; color:#8a2e2e; border:1px solid rgba(153,0,0,.14)}
+    .notice.error{background:#fff0f0; color:var(--danger); border:1px solid rgba(153,0,0,.14)}
     .notice.success{background:#eef9f2; color:#256746; border:1px solid rgba(37,103,70,.15)}
+    .activity-list{display:grid; gap:10px; margin-top:12px; max-height:340px; overflow-y:auto}
+    .activity-item{padding:10px 12px; border-radius:12px; background:#fffdfb; border:1px solid var(--line); font-size:13px}
+    .activity-item .activity-meta{color:var(--muted); font-size:11px; margin-top:4px}
+    .activity-type{display:inline-block; font-size:10px; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:8px; background:#f1ece3; margin-right:6px}
+    .note-form{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
+    .note-form textarea{flex:1 1 220px}
     @media (max-width:860px){
       .grid{grid-template-columns:1fr}
       .wrap{width:min(100% - 16px,100%)}
       .topbar,.card{padding:16px}
       .topbar{position:static}
       h1{font-size:38px}
-      .actions > *,.statusbar > *{flex:1 1 100%}
+      .actions > *,.statusbar-row > *{flex:1 1 100%}
     }
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -77,6 +88,10 @@
       </div>
       <div class="actions">
         <a class="btn" href="admin.html">Dashboard</a>
+        <a class="btn" href="historique.html">Historique</a>
+        <a class="btn" href="agenda.html">Agenda</a>
+        <a class="btn" href="publications.html">Réalisations</a>
+        <a class="btn" href="stats.html">Stats</a>
         <a class="btn" href="devis.html">Retour liste</a>
         <button class="btn btn-primary" id="logoutBtn" type="button">Déconnexion</button>
       </div>
@@ -86,6 +101,9 @@
       <article class="card">
         <h2>Informations client</h2>
         <div class="fields" id="clientFields"></div>
+        <div class="statusbar-row" style="margin-top:14px;">
+          <a class="btn btn-sm" id="emailBtn" href="#" target="_blank" rel="noopener">✉ Envoyer un email</a>
+        </div>
       </article>
 
       <article class="card">
@@ -93,12 +111,37 @@
         <div class="fields" id="eventFields"></div>
 
         <div class="statusbar">
-          <select id="statusSelect">
-            <option value="new">Nouveau</option>
-            <option value="in_progress">En cours</option>
-            <option value="closed">Clôturé</option>
-          </select>
-          <button class="btn btn-primary" id="saveStatusBtn" type="button">Enregistrer le statut</button>
+          <div class="statusbar-row">
+            <label for="statusSelect">Statut</label>
+            <select id="statusSelect">
+              <option value="nouveau">Nouveau</option>
+              <option value="a_contacter">À contacter</option>
+              <option value="contacte">Contacté</option>
+              <option value="rdv_prevu">Rendez-vous prévu</option>
+              <option value="devis_envoye">Devis envoyé</option>
+              <option value="en_attente_reponse">En attente de réponse</option>
+              <option value="accepte">Accepté</option>
+              <option value="refuse">Refusé</option>
+              <option value="cloture">Clôturé</option>
+            </select>
+          </div>
+          <div class="statusbar-row">
+            <label for="prioritySelect">Priorité</label>
+            <select id="prioritySelect">
+              <option value="normale">Normale</option>
+              <option value="importante">Importante</option>
+              <option value="urgente">Urgente</option>
+            </select>
+          </div>
+          <div class="statusbar-row">
+            <label for="followUpInput">Date de relance</label>
+            <input type="date" id="followUpInput">
+          </div>
+          <div class="statusbar-row">
+            <button class="btn btn-primary btn-sm" id="saveStatusBtn" type="button">Enregistrer</button>
+            <button class="btn btn-sm" id="archiveBtn" type="button">Archiver</button>
+            <a class="btn btn-sm" id="createEventBtn" href="#" style="display:none;">📅 Créer un événement</a>
+          </div>
         </div>
 
         <div id="notice" class="notice"></div>
@@ -108,10 +151,20 @@
         <h2>Message du client</h2>
         <div class="message-box" id="messageBox">Chargement…</div>
       </article>
+
+      <article class="card" style="grid-column:1 / -1;">
+        <h2>Historique &amp; notes internes</h2>
+        <div class="note-form">
+          <textarea id="noteInput" placeholder="Ajouter une note interne (invisible pour le client)…"></textarea>
+          <button class="btn btn-primary btn-sm" id="addNoteBtn" type="button">Ajouter la note</button>
+        </div>
+        <div class="activity-list" id="activityList">
+          <div class="muted">Chargement de l'historique…</div>
+        </div>
+      </article>
     </section>
   </div>
 
-  <script src="config/supabase.js"></script>
   <script>
     (function () {
       const subtitle = document.getElementById('subtitle');
@@ -119,11 +172,29 @@
       const eventFields = document.getElementById('eventFields');
       const messageBox = document.getElementById('messageBox');
       const statusSelect = document.getElementById('statusSelect');
+      const prioritySelect = document.getElementById('prioritySelect');
+      const followUpInput = document.getElementById('followUpInput');
       const saveStatusBtn = document.getElementById('saveStatusBtn');
+      const archiveBtn = document.getElementById('archiveBtn');
+      const createEventBtn = document.getElementById('createEventBtn');
+      const emailBtn = document.getElementById('emailBtn');
       const logoutBtn = document.getElementById('logoutBtn');
       const notice = document.getElementById('notice');
+      const activityList = document.getElementById('activityList');
+      const noteInput = document.getElementById('noteInput');
+      const addNoteBtn = document.getElementById('addNoteBtn');
+
+      const STATUS_LABELS = {
+        nouveau: 'Nouveau', a_contacter: 'À contacter', contacte: 'Contacté',
+        rdv_prevu: 'Rendez-vous prévu', devis_envoye: 'Devis envoyé',
+        en_attente_reponse: 'En attente de réponse', accepte: 'Accepté',
+        refuse: 'Refusé', cloture: 'Clôturé'
+      };
+      const ACTIVITY_LABELS = { status_change: 'Statut', note: 'Note', email_sent: 'Email' };
 
       let devisId = null;
+      let currentQuote = null;
+      let currentUserEmail = null;
 
       function escapeHtml(value) {
         return String(value ?? '')
@@ -145,6 +216,13 @@
         if (Number.isNaN(d.getTime())) return String(date);
         return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' });
       }
+      function formatDateTime(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return String(iso);
+        return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) +
+          ' à ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+      }
 
       function field(label, value) {
         return `
@@ -165,12 +243,50 @@
           window.location.href = 'login.html';
           return false;
         }
+        currentUserEmail = data.session.user.email || 'admin';
         return true;
       }
 
       function readIdFromUrl() {
         const params = new URLSearchParams(window.location.search);
         return params.get('id');
+      }
+
+      async function loadActivity() {
+        const { data, error } = await window.supabase
+          .from('quote_activity')
+          .select('*')
+          .eq('quote_id', devisId)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          activityList.innerHTML = '<div class="muted">Impossible de charger l\'historique.</div>';
+          return;
+        }
+        const rows = Array.isArray(data) ? data : [];
+        if (!rows.length) {
+          activityList.innerHTML = '<div class="muted">Aucune activité enregistrée pour le moment.</div>';
+          return;
+        }
+        activityList.innerHTML = rows.map(a => `
+          <div class="activity-item">
+            <span class="activity-type">${escapeHtml(ACTIVITY_LABELS[a.type] || a.type)}</span>${escapeHtml(a.content)}
+            <div class="activity-meta">${escapeHtml(a.created_by || 'admin')} · ${escapeHtml(formatDateTime(a.created_at))}</div>
+          </div>
+        `).join('');
+      }
+
+      async function logActivity(type, content) {
+        await window.supabase.from('quote_activity').insert({
+          quote_id: devisId, type: type, content: content, created_by: currentUserEmail
+        });
+      }
+
+      function buildMailto(quote) {
+        if (!quote || !quote.email) return '#';
+        const subject = encodeURIComponent('Votre demande de devis — Amely Paris');
+        const body = encodeURIComponent('Bonjour ' + (quote.full_name || '') + ',\n\n');
+        return 'mailto:' + encodeURIComponent(quote.email) + '?subject=' + subject + '&body=' + body;
       }
 
       async function loadQuote() {
@@ -196,7 +312,8 @@
           return;
         }
 
-        subtitle.textContent = (data.full_name || 'Client') + ' · ' + (data.email || 'email non renseigné');
+        currentQuote = data;
+        subtitle.textContent = (data.full_name || 'Client') + ' · ' + (data.email || 'email non renseigné') + (data.archived ? ' · Archivé' : '');
 
         clientFields.innerHTML = [
           field('Nom complet', data.full_name),
@@ -214,25 +331,91 @@
         ].join('');
 
         messageBox.textContent = data.message || 'Aucun message renseigné.';
-        statusSelect.value = data.status || 'new';
+        statusSelect.value = data.status || 'nouveau';
+        prioritySelect.value = data.priority || 'normale';
+        followUpInput.value = data.follow_up_date || '';
+        archiveBtn.textContent = data.archived ? 'Désarchiver' : 'Archiver';
+        emailBtn.href = buildMailto(data);
+        updateCreateEventBtn(data);
+
+        await loadActivity();
+      }
+
+      function updateCreateEventBtn(quote) {
+        if (quote.status === 'accepte') {
+          createEventBtn.style.display = '';
+          createEventBtn.href = 'agenda.html?from_quote=' + encodeURIComponent(quote.id);
+        } else {
+          createEventBtn.style.display = 'none';
+        }
       }
 
       saveStatusBtn.addEventListener('click', async function () {
-        if (!devisId || !window.supabase) return;
+        if (!devisId || !window.supabase || !currentQuote) return;
 
         const newStatus = statusSelect.value;
+        const newPriority = prioritySelect.value;
+        const newFollowUp = followUpInput.value || null;
+        const statusChanged = newStatus !== currentQuote.status;
 
         const { error } = await window.supabase
           .from('quote_requests')
-          .update({ status: newStatus })
+          .update({
+            status: newStatus,
+            priority: newPriority,
+            follow_up_date: newFollowUp,
+            updated_by: currentUserEmail,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', devisId);
 
         if (error) {
-          setNotice(error.message || 'Impossible de mettre à jour le statut.', 'error');
+          setNotice(error.message || 'Impossible de mettre à jour le devis.', 'error');
           return;
         }
 
-        setNotice('Statut mis à jour avec succès.', 'success');
+        if (statusChanged) {
+          await logActivity('status_change', 'Statut changé de « ' + (STATUS_LABELS[currentQuote.status] || currentQuote.status) + ' » à « ' + (STATUS_LABELS[newStatus] || newStatus) + ' »');
+        }
+
+        currentQuote.status = newStatus;
+        currentQuote.priority = newPriority;
+        currentQuote.follow_up_date = newFollowUp;
+        updateCreateEventBtn(currentQuote);
+
+        setNotice('Devis mis à jour avec succès.', 'success');
+        await loadActivity();
+      });
+
+      archiveBtn.addEventListener('click', async function () {
+        if (!devisId || !currentQuote) return;
+        const target = !currentQuote.archived;
+        const { error } = await window.supabase
+          .from('quote_requests')
+          .update({ archived: target, updated_by: currentUserEmail, updated_at: new Date().toISOString() })
+          .eq('id', devisId);
+        if (error) { setNotice(error.message, 'error'); return; }
+        currentQuote.archived = target;
+        archiveBtn.textContent = target ? 'Désarchiver' : 'Archiver';
+        await logActivity('status_change', target ? 'Devis archivé' : 'Devis désarchivé');
+        setNotice(target ? 'Devis archivé.' : 'Devis désarchivé.', 'success');
+        await loadActivity();
+      });
+
+      emailBtn.addEventListener('click', async function () {
+        if (!devisId) return;
+        await logActivity('email_sent', 'Email ouvert dans le client de messagerie vers ' + (currentQuote.email || ''));
+        setTimeout(loadActivity, 300);
+      });
+
+      addNoteBtn.addEventListener('click', async function () {
+        const text = noteInput.value.trim();
+        if (!text) return;
+        addNoteBtn.disabled = true;
+        await logActivity('note', text);
+        noteInput.value = '';
+        addNoteBtn.disabled = false;
+        await loadActivity();
       });
 
       logoutBtn.addEventListener('click', async function () {
@@ -244,5 +427,5 @@
       loadQuote();
     })();
   </script>
-</body>
+<script src="../assets/js/admin-notifications.js"></script></body>
 </html>

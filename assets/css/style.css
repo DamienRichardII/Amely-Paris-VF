@@ -671,12 +671,25 @@ h3{font-size:clamp(24px,2.8vw,40px);}
 }
 
 /* ══ MOBILE NAV ══ */
-.primary-nav.is-open{display:flex;flex-direction:column;position:fixed;top:72px;left:0;right:0;bottom:0;background:var(--white);padding:32px 28px;gap:0;overflow-y:auto;z-index:99;border-top:1px solid var(--line);}
-.primary-nav.is-open>a,.primary-nav.is-open .nav-item>a{font-size:13px;padding:16px 0;border-bottom:1px solid var(--line2);display:block;color:var(--ink);}
+.primary-nav.is-open{display:flex;flex-direction:column;position:fixed;top:72px;left:0;right:0;bottom:0;background:var(--white);padding:24px 28px calc(24px + env(safe-area-inset-bottom));gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;z-index:99;border-top:1px solid var(--line);}
+.primary-nav.is-open>a,.primary-nav.is-open .nav-item>a{font-size:13px;padding:16px 2px;min-height:44px;display:flex;align-items:center;border-bottom:1px solid var(--line2);color:var(--ink);}
 .primary-nav.is-open>a::after,.primary-nav.is-open .nav-item>a::after{display:none;}
 .primary-nav.is-open .dropdown{position:static;opacity:1;pointer-events:auto;transform:none;border:none;padding:0 0 0 16px;display:none;}
 .primary-nav.is-open .nav-item.is-open .dropdown{display:block;}
-.primary-nav.is-open .dropdown a{font-size:12px;padding:10px 0;border-bottom:1px solid var(--line2);}
+.primary-nav.is-open .dropdown a{font-size:12px;padding:10px 2px;min-height:40px;display:flex;align-items:center;border-bottom:1px solid var(--line2);}
+/* CTA dédié en bas du menu mobile — séparé des liens, contraste garanti */
+.nav-mobile-cta{display:none;}
+.primary-nav.is-open .nav-mobile-cta{
+  display:block;margin-top:20px;padding-top:20px;border-top:1px solid var(--line);
+}
+.primary-nav.is-open .nav-mobile-cta a{
+  display:flex;align-items:center;justify-content:center;
+  min-height:48px;width:100%;
+  background:var(--ink);color:var(--white);
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;
+  border:1px solid var(--ink);
+}
+.primary-nav.is-open .nav-mobile-cta a:hover{background:transparent;color:var(--ink);}
 
 
 /* Page À propos — héro portrait complet */
@@ -764,3 +777,35 @@ h3{font-size:clamp(24px,2.8vw,40px);}
 /* ══ JOURNAL — Grille 2 cartes ══ */
 .journal-grid--2{grid-template-columns:1fr 1fr;max-width:900px;}
 @media(max-width:768px){.journal-grid--2{grid-template-columns:1fr;}}
+
+/* ══ AVIS CLIENTS — accueil, au-dessus du pré-footer ══ */
+.reviews-head{text-align:center;max-width:640px;margin:0 auto 48px;}
+.reviews-head .kicker{justify-content:center;display:flex;}
+.reviews-head h2{margin:0;}
+.reviews-track{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:24px;
+}
+.review-card{
+  background:var(--white);border:1px solid var(--line);
+  padding:32px 28px;display:flex;flex-direction:column;gap:16px;
+  box-shadow:0 12px 32px rgba(0,0,0,.04);
+}
+.review-stars{color:var(--gold);font-size:14px;letter-spacing:.12em;}
+.review-text{font-size:13px;line-height:1.75;color:var(--ink);flex:1;font-style:italic;}
+.review-author{display:flex;flex-direction:column;gap:2px;padding-top:12px;border-top:1px solid var(--line2);}
+.review-name{font-size:12px;font-weight:500;letter-spacing:.03em;color:var(--ink);}
+.review-type{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
+@media(max-width:1024px){
+  .reviews-track{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:680px){
+  .reviews-track{
+    grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:86%;
+    display:grid;overflow-x:auto;gap:16px;padding:4px 4px 12px;
+    scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .reviews-track::-webkit-scrollbar{display:none;}
+  .review-card{scroll-snap-align:center;}
+  .reviews-head{margin-bottom:32px;}
+}
