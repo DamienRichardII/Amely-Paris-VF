@@ -239,7 +239,11 @@ h3{font-size:clamp(24px,2.8vw,40px);}
 }
 
 .nav-toggle{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-direction:column;gap:5px;justify-self:end;}
-.nav-toggle span{display:block;width:22px;height:1px;background:var(--white);transition:transform .25s ease,opacity .25s ease;}
+.nav-toggle span{display:block;width:22px;height:1px;background:var(--white);transition:transform .25s ease,opacity .25s ease;transform-origin:center;}
+/* Hamburger → croix quand le menu mobile est ouvert */
+.nav-toggle[aria-expanded="true"] span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+.nav-toggle[aria-expanded="true"] span:nth-child(2){opacity:0;}
+.nav-toggle[aria-expanded="true"] span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
 
 /* ══ BUTTONS ══ */
 .btn{display:inline-block;font-size:10px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;padding:13px 28px;border:1px solid var(--ink);background:transparent;color:var(--ink);transition:background .2s,color .2s;cursor:pointer;white-space:nowrap;}
@@ -678,26 +682,74 @@ h3{font-size:clamp(24px,2.8vw,40px);}
   .look{flex:0 0 220px;height:290px;}
 }
 
-/* ══ MOBILE NAV ══ */
-.primary-nav.is-open{display:flex;flex-direction:column;position:fixed;top:72px;left:0;right:0;bottom:0;background:var(--white);padding:24px 28px calc(24px + env(safe-area-inset-bottom));gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;z-index:99;border-top:1px solid var(--line);}
-.primary-nav.is-open>a,.primary-nav.is-open .nav-item>a{font-size:13px;padding:16px 2px;min-height:44px;display:flex;align-items:center;border-bottom:1px solid var(--line2);color:var(--ink);}
-.primary-nav.is-open>a::after,.primary-nav.is-open .nav-item>a::after{display:none;}
-.primary-nav.is-open .dropdown{position:static;opacity:1;pointer-events:auto;transform:none;border:none;padding:0 0 0 16px;display:none;}
+/* ══ MOBILE NAV — plein écran éditorial ══ */
+.primary-nav.is-open{
+  display:flex;flex-direction:column;
+  position:fixed;top:72px;left:0;right:auto;bottom:0;width:100vw;
+  background:var(--cream);
+  padding:40px 32px calc(32px + env(safe-area-inset-bottom));
+  gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  z-index:99;border-top:1px solid var(--line);
+  counter-reset:navnum;
+  animation:navPanelIn .35s var(--ease) both;
+}
+.primary-nav.is-open>*{animation:navItemIn .5s var(--ease) both;}
+.primary-nav.is-open>*:nth-child(1){animation-delay:.06s}
+.primary-nav.is-open>*:nth-child(2){animation-delay:.11s}
+.primary-nav.is-open>*:nth-child(3){animation-delay:.16s}
+.primary-nav.is-open>*:nth-child(4){animation-delay:.21s}
+.primary-nav.is-open>*:nth-child(5){animation-delay:.26s}
+.primary-nav.is-open>*:nth-child(6){animation-delay:.31s}
+@keyframes navPanelIn{from{opacity:0;}to{opacity:1;}}
+@keyframes navItemIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@media (prefers-reduced-motion:reduce){
+  .primary-nav.is-open,.primary-nav.is-open>*{animation:none;}
+}
+
+/* Grands liens serif numérotés — Accueil / Réalisations / Journal + déclencheurs de sous-menu */
+.primary-nav.is-open>a,.primary-nav.is-open .nav-item>a{
+  position:relative;font-family:var(--serif);font-style:italic;font-weight:400;
+  font-size:clamp(26px,7.5vw,38px);letter-spacing:0;text-transform:none;
+  padding:16px 0;min-height:auto;display:flex;align-items:baseline;
+  border-bottom:1px solid var(--line);color:var(--ink);
+}
+.primary-nav.is-open>a::before,.primary-nav.is-open .nav-item>a::before{
+  counter-increment:navnum;content:counter(navnum,decimal-leading-zero);
+  font-family:var(--sans);font-style:normal;font-size:11px;font-weight:500;
+  letter-spacing:.08em;color:var(--gold);margin-right:18px;flex:none;
+}
+.primary-nav.is-open>a::after{content:none;}
+/* Chevron "+" → "×" pour les déclencheurs de sous-menu (Prestations / À propos) */
+.primary-nav.is-open .nav-item>a::after{
+  content:'+';position:static;margin-left:auto;
+  width:auto;height:auto;background:none;transform:rotate(0deg);
+  font-family:var(--sans);font-style:normal;font-size:24px;font-weight:300;
+  color:var(--gold);transition:transform .3s var(--ease);
+}
+.primary-nav.is-open .nav-item.is-open>a::after{transform:rotate(45deg);}
+
+.primary-nav.is-open .dropdown{position:static;opacity:1;pointer-events:auto;transform:none;border:none;padding:0 0 0 30px;display:none;}
 .primary-nav.is-open .nav-item.is-open .dropdown{display:block;}
-.primary-nav.is-open .dropdown a{font-size:12px;padding:10px 2px;min-height:40px;display:flex;align-items:center;border-bottom:1px solid var(--line2);}
-/* CTA dédié en bas du menu mobile — séparé des liens, contraste garanti */
+.primary-nav.is-open .dropdown a{
+  font-family:var(--sans);font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;
+  padding:13px 0;min-height:auto;display:flex;align-items:center;
+  border-bottom:1px solid var(--line2);color:var(--muted);
+}
+.primary-nav.is-open .dropdown a:hover{color:var(--ink);}
+
+/* CTA dédié en bas du menu mobile — accent doré, séparé des liens */
 .nav-mobile-cta{display:none;}
 .primary-nav.is-open .nav-mobile-cta{
-  display:block;margin-top:20px;padding-top:20px;border-top:1px solid var(--line);
+  display:block;margin-top:28px;padding-top:0;border-top:none;
 }
 .primary-nav.is-open .nav-mobile-cta a{
   display:flex;align-items:center;justify-content:center;
-  min-height:48px;width:100%;
-  background:var(--ink);color:var(--white);
-  font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:500;
-  border:1px solid var(--ink);
+  min-height:52px;width:100%;
+  background:var(--gold);color:var(--ink);
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;
+  border:1px solid var(--gold);transition:background .2s,color .2s,border-color .2s;
 }
-.primary-nav.is-open .nav-mobile-cta a:hover{background:transparent;color:var(--ink);}
+.primary-nav.is-open .nav-mobile-cta a:hover{background:transparent;color:var(--ink);border-color:var(--ink);}
 
 
 /* Page À propos — héro portrait complet */
