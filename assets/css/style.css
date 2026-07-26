@@ -155,7 +155,15 @@ h3{font-size:clamp(24px,2.8vw,40px);}
 /* scrolled = blanc permanent */
 .site-header.scrolled{background:rgba(255,255,255,.96);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--line);}
 /* nav-open = bande blanche au hover (Ralph Lauren) */
-.site-header.nav-open{background:rgba(255,255,255,.98);backdrop-filter:blur(18px);box-shadow:0 2px 40px rgba(0,0,0,.06);}
+.site-header.nav-open{background:rgba(255,255,255,.98);box-shadow:0 2px 40px rgba(0,0,0,.06);}
+/* Important : pas de backdrop-filter quand le menu mobile est ouvert.
+   backdrop-filter sur .site-header (ancêtre) crée un nouveau bloc de
+   confinement pour ses descendants en position:fixed (dont .primary-nav.is-open),
+   ce qui casse son plein-écran (top/left/right/bottom deviennent relatifs
+   au header de 72px au lieu du viewport) et ne laisse apparaître qu'une
+   mini-boîte flottante avec le premier lien du menu ("Accueil"). */
+.site-header.nav-open,
+.site-header.scrolled.nav-open{backdrop-filter:none;-webkit-backdrop-filter:none;}
 .site-header.scrolled .primary-nav>a,
 .site-header.scrolled .nav-item>a,
 .site-header.nav-open .primary-nav>a,
